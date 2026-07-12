@@ -10,6 +10,8 @@ router.use('/auth', authRoutes);
 
 router.use('/hr', hrRoutes);
 
+router.use('/documents', documentRoutes);
+
 router.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 module.exports = router;
