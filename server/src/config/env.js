@@ -17,6 +17,15 @@ const envSchema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().min(1, 'S3_SECRET_ACCESS_KEY is required'),
   S3_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
 
+  AWS_REGION: z.string().default('us-east-1'),
+  BEDROCK_EMBEDDING_MODEL_ID: z.string().default('amazon.titan-embed-text-v2:0'),
+  BEDROCK_GENERATION_MODEL_ID: z.string(),
+  VECTOR_SIMILARITY_THRESHOLD: z.coerce.number().default(0.5),
+  CHUNK_SIZE_CHARS: z.coerce.number().default(2000),
+  CHUNK_OVERLAP_CHARS: z.coerce.number().default(200),
+
+  REDIS_URL: z.string().default('redis://localhost:6379'),
+
   MAX_UPLOAD_SIZE_MB: z.coerce.number().default(20),
 });
 
