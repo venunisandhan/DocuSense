@@ -20,6 +20,14 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin123
     volumes:
       - minio_data:/data
+  
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
 volumes:
   mongo_data:
   minio_data:
+  redus_data:
