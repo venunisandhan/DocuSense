@@ -27,6 +27,17 @@ const envSchema = z.object({
   REDIS_URL: z.string().default('redis://localhost:6379'),
 
   MAX_UPLOAD_SIZE_MB: z.coerce.number().default(20),
+
+  GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
+  GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET is required'),
+  GOOGLE_REDIRECT_URI: z.string().url(),
+  PENDING_ROLE_TOKEN_SECRET: z.string().min(16, 'PENDING_ROLE_TOKEN_SECRET must be at least 16 characters'),
+
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  EMAIL_FROM: z.string().default('DocuSense <no-reply@docusense.local>'),
 });
 
 const parsed = envSchema.safeParse(process.env);
