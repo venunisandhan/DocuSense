@@ -7,6 +7,77 @@ const ApiError = require('../utils/ApiError');
 
 const env = require('../config/env');
 
+const crypto = require('crypto');
+
+const googleClient = require('../config/googleClient');
+
+function generatePendingRoleToken(googleProfile) {
+  return jwt.sign(
+    { purpose: 'GOOGLE_ROLE_SELECTION', googleId: googleProfile.sub, email: googleProfile.email, name: googleProfile.name },
+    env.PENDING_ROLE_TOKEN_SECRET,
+    { expiresIn: '10m' }
+  );
+}
+
+async function handleGoogleCallback(code) {
+  const { tokens } = await googleClient.getToken(code);
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken: tokens.id_token,
+    audience: env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+
+  let user = await User.findOne({ googleId: payload.sub });
+
+  if (!user) {
+    user = await User.findOne({ email: payload.email });
+    if (user && user.authProvider === 'LOCAL') {
+      throw new ApiError(409, 'An account with this email already exists. Please log in with your password.', 'EMAIL_TAKEN');
+    }
+  }
+
+  if (user) {
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    return { status: 'LOGGED_IN', user, accessToken, refreshToken };
+  }
+
+  const pendingToken = generatePendingRoleToken(payload);
+  return { status: 'NEEDS_ROLE', pendingToken };
+}
+
+async function completeGoogleSignup(pendingToken, role) {
+  let payload;
+  try {
+    payload = jwt.verify(pendingToken, env.PENDING_ROLE_TOKEN_SECRET);
+  } catch (err) {
+    throw new ApiError(401, 'This sign-up link has expired. Please try signing in with Google again.', 'INVALID_PENDING_TOKEN');
+  }
+
+  if (payload.purpose !== 'GOOGLE_ROLE_SELECTION') {
+    throw new ApiError(400, 'Invalid token', 'INVALID_PENDING_TOKEN');
+  }
+
+  const existing = await User.findOne({ $or: [{ googleId: payload.googleId }, { email: payload.email }] });
+  if (existing) {
+    throw new ApiError(409, 'An account with this email already exists', 'EMAIL_TAKEN');
+  }
+
+  const user = await User.create({
+    name: payload.name,
+    email: payload.email,
+    googleId: payload.googleId,
+    authProvider: 'GOOGLE',
+    role,
+  });
+
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  return { user, accessToken, refreshToken };
+}
+
 function generateAccessToken(user) {
   return jwt.sign(
     { userId: user._id, role: user.role },

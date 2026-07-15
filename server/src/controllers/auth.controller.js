@@ -3,6 +3,50 @@ const authService = require('../services/auth.service');
 
 const env = require('../config/env');
 
+const googleClient = require('../config/googleClient');
+
+const env = require('../config/env');
+
+function googleRedirect(req, res) {
+  const url = googleClient.generateAuthUrl({
+    access_type: 'online',
+    scope: ['openid', 'email', 'profile'],
+    prompt: 'select_account',
+  });
+  res.redirect(url);
+}
+
+async function googleCallback(req, res) {
+  const { code } = req.query;
+
+  if (!code) {
+    return res.redirect(`${env.CLIENT_ORIGIN}/login?error=google_auth_failed`);
+  }
+
+  const result = await authService.handleGoogleCallback(code);
+
+  if (result.status === 'NEEDS_ROLE') {
+    return res.redirect(`${env.CLIENT_ORIGIN}/oauth/choose-role?token=${result.pendingToken}`);
+  }
+
+  res.cookie('refreshToken', result.refreshToken, REFRESH_COOKIE_OPTIONS);
+  res.redirect(`${env.CLIENT_ORIGIN}/oauth/success`);
+}
+
+async function googleComplete(req, res) {
+  const { token, role } = req.body;
+  const { user, accessToken, refreshToken } = await authService.completeGoogleSignup(token, role);
+
+  res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
+  res.status(201).json({
+    success: true,
+    data: {
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      accessToken,
+    },
+  });
+}
+
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',

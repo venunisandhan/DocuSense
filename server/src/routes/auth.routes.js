@@ -32,4 +32,14 @@ router.get('/me',
           authenticate, 
           asyncHandler(authController.me));
 
+router.get('/google', 
+          authController.googleRedirect);
+
+router.get('/google/callback', 
+          asyncHandler(authController.googleCallback));
+
+router.post('/google/complete', 
+        validate(completeGoogleSchema), 
+        asyncHandler(authController.googleComplete));
+
 module.exports = router;
