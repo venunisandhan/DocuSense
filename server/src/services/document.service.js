@@ -1,9 +1,7 @@
-
 const Document = require('../models/Document');
-
 const ApiError = require('../utils/ApiError');
-
 const s3Service = require('./s3.service');
+const ragQueue = require('../queues/rag.queue');
 
 async function uploadDocument({ title, file, uploadedBy }) {
   const documentId = s3Service.generateDocumentId();
@@ -20,6 +18,9 @@ async function uploadDocument({ title, file, uploadedBy }) {
     sizeBytes: file.size,
     uploadedBy,
   });
+
+ 
+  await ragQueue.add('process-document', { documentId: document._id.toString() });
 
   return document;
 }
