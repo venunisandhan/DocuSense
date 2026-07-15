@@ -41,5 +41,13 @@ router.get('/google/callback',
 router.post('/google/complete', 
         validate(completeGoogleSchema), 
         asyncHandler(authController.googleComplete));
+router.post(
+        '/forgot-password',
+        validate(forgotPasswordSchema),
+        asyncHandler(authController.forgotPassword));
+router.post(
+        '/reset-password',
+        validate(resetPasswordSchema),
+        asyncHandler(authController.resetPassword));
 
 module.exports = router;
