@@ -12,6 +12,7 @@ If the context does not contain enough information to answer the question, respo
 If the question is unrelated to the document's content (general knowledge, current events, math, real-world facts, or anything not about the document), respond with exactly this sentence and nothing else: "I'm a document assistant and can only answer questions about the uploaded documents."`;
 
 async function generateAnswer(question, contextChunks) {
+  
   const context = contextChunks.map((c, i) => `[Excerpt ${i + 1}]\n${c.text}`).join('\n\n');
 
   const command = new InvokeModelCommand({
