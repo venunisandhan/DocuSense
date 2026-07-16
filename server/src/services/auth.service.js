@@ -1,4 +1,3 @@
-
 const jwt = require('jsonwebtoken');
 
 const User = require('../models/User');
@@ -10,6 +9,8 @@ const env = require('../config/env');
 const crypto = require('crypto');
 
 const googleClient = require('../config/googleClient');
+
+const emailService = require('./email.service');
 
 function generatePendingRoleToken(googleProfile) {
   return jwt.sign(
@@ -154,4 +155,59 @@ async function refreshAccessToken(refreshToken) {
   return generateAccessToken(user);
 }
 
-module.exports = { register, login, refreshAccessToken, generateAccessToken, generateRefreshToken };
+const RESET_TOKEN_EXPIRY_MINUTES = 15;
+
+function hashToken(rawToken) {
+  return crypto.createHash('sha256').update(rawToken).digest('hex');
+}
+
+async function forgotPassword(email) {
+  const user = await User.findOne({ email, authProvider: 'LOCAL' });
+
+  if (user) {
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = hashToken(rawToken);
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
+
+    user.resetPasswordTokenHash = tokenHash;
+    user.resetPasswordExpiresAt = expiresAt;
+    await user.save();
+
+    const resetUrl = `${env.CLIENT_ORIGIN}/reset-password?token=${rawToken}`;
+    await emailService.sendPasswordResetEmail(user.email, resetUrl);
+  }
+
+  // No return value -- deliberately identical behavior whether or not a
+  // matching account was found, so the controller can send the same generic
+  // response either way and avoid leaking account existence.
+}
+
+async function resetPassword(rawToken, newPassword) {
+  const tokenHash = hashToken(rawToken);
+
+  const user = await User.findOne({
+    resetPasswordTokenHash: tokenHash,
+    resetPasswordExpiresAt: { $gt: new Date() },
+  }).select('+resetPasswordTokenHash +resetPasswordExpiresAt');
+
+  if (!user) {
+    throw new ApiError(400, 'This reset link is invalid or has expired', 'INVALID_RESET_TOKEN');
+  }
+
+  user.passwordHash = await User.hashPassword(newPassword);
+  user.resetPasswordTokenHash = null;
+  user.resetPasswordExpiresAt = null;
+  await user.save();
+}
+
+module.exports = {
+  register,
+  login,
+  refreshAccessToken,
+  generateAccessToken,
+  generateRefreshToken,
+  handleGoogleCallback,
+  completeGoogleSignup,
+  forgotPassword,
+  resetPassword,
+};

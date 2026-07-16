@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const documentAccessSchema = new mongoose.Schema(
   {
     document: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: 'Document',
       required: true,
     },
@@ -39,19 +39,17 @@ const documentAccessSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-documentAccessSchema.pre('validate', function (next) {
+documentAccessSchema.pre('validate', function () {
   const hasUser = !!this.grantedTo;
   const hasGroup = !!this.grantedToGroup;
 
   if (hasUser === hasGroup) {
-    return next(new Error('DocumentAccess must have exactly one of grantedTo or grantedToGroup'));
+    throw new Error('DocumentAccess must have exactly one of grantedTo or grantedToGroup');
   }
 
   if (this.accessType === 'EXPIRING' && !this.expiresAt) {
-    return next(new Error('expiresAt is required when accessType is EXPIRING'));
+    throw new Error('expiresAt is required when accessType is EXPIRING');
   }
-
-  next();
 });
 
 documentAccessSchema.index({ document: 1, grantedTo: 1 });

@@ -15,13 +15,13 @@ const uploadDocumentSchema = z.object({
 
 const documentIdParamSchema = z.object({
   params: z.object({
-    id: objectIdSchema,
+    id: z.string().uuid({ message: 'Invalid Document ID format' }),
   }),
 });
 
 const updateGuidelinesSchema = z.object({
   params: z.object({
-    id: objectIdSchema,
+    id: z.string().uuid({ message: 'Invalid Document ID format' }),
   }),
   body: z.object({
     guidelines: z.string().max(5000, 'Guidelines cannot exceed 5000 characters'),

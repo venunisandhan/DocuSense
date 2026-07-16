@@ -9,7 +9,7 @@ const validate = (schema) => (req, res, next) => {
   });
 
   if (!result.success) {
-    const firstError = result.error.errors[0];
+    const firstError = result.error.issues ? result.error.issues[0] : result.error.errors[0];
     return next(new ApiError(400, firstError.message, 'VALIDATION_ERROR'));
   }
 

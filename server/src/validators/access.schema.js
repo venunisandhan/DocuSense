@@ -10,13 +10,13 @@ const objectIdSchema = z.string().refine(
 
 const documentIdParamSchema = z.object({
   params: z.object({
-    id: objectIdSchema,
+    id: z.string().uuid({ message: 'Invalid Document ID format' }),
   }),
 });
 
 const grantAccessSchema = z.object({
   params: z.object({
-    id: objectIdSchema,
+    id: z.string().uuid({ message: 'Invalid Document ID format' }),
   }),
   body: z
     .object({
@@ -35,7 +35,7 @@ const grantAccessSchema = z.object({
 
 const revokeAccessParamSchema = z.object({
   params: z.object({
-    id: objectIdSchema,
+    id: z.string().uuid({ message: 'Invalid Document ID format' }),
     accessId: objectIdSchema,
   }),
 });

@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const chatLogSchema = new mongoose.Schema(
   {
     document: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: 'Document',
       required: true,
     },

@@ -2,6 +2,7 @@ const express = require('express');
 
 const documentController = require('../controllers/document.controller');
 const ragController = require('../controllers/rag.controller');
+const accessController = require('../controllers/access.controller');
 
 const authenticate = require('../middlewares/authenticate');
 const authorize = require('../middlewares/authorize');
@@ -17,7 +18,6 @@ const {
 
 const { chatSchema, ragParamSchema } = require('../validators/rag.schema');
 
-const accessController = require('../controllers/access.controller');
 const {
   grantAccessSchema,
   revokeAccessParamSchema,
@@ -28,7 +28,6 @@ const router = express.Router();
 
 router.use(authenticate);
 
-// --- HR: upload & manage own documents ---
 router.post(
   '/',
   authorize('HR'),
@@ -39,16 +38,6 @@ router.post(
 
 router.get('/', authorize('HR'), asyncHandler(documentController.listMyUploads));
 
-router.get('/mine', authorize('EMPLOYEE'), asyncHandler(documentController.listMyShared));
-
-router.get('/:id', validate(documentIdParamSchema), asyncHandler(documentController.getDocument));
-
-router.get(
-  '/:id/download',
-  validate(documentIdParamSchema),
-  asyncHandler(documentController.getDownloadUrl)
-);
-
 router.patch(
   '/:id/guidelines',
   authorize('HR'),
@@ -56,21 +45,43 @@ router.patch(
   asyncHandler(documentController.updateGuidelines)
 );
 
-router.delete('/:id', authorize('HR'), validate(documentIdParamSchema), asyncHandler(documentController.deleteDocument));
+router.delete(
+  '/:id',
+  authorize('HR'),
+  validate(documentIdParamSchema),
+  asyncHandler(documentController.deleteDocument)
+);
 
-router.post('/:id/access', authorize('HR'), validate(grantAccessSchema), asyncHandler(accessController.grantAccess));
-router.get('/:id/access', authorize('HR'), validate(accessDocumentIdParamSchema), asyncHandler(accessController.listAccess));
-router.delete('/:id/access/:accessId', authorize('HR'), validate(revokeAccessParamSchema), asyncHandler(accessController.revokeAccess));
+router.post(
+  '/:id/access',
+  authorize('HR'),
+  validate(grantAccessSchema),
+  asyncHandler(accessController.grantAccess)
+);
+router.get(
+  '/:id/access',
+  authorize('HR'),
+  validate(accessDocumentIdParamSchema),
+  asyncHandler(accessController.listAccess)
+);
+router.delete(
+  '/:id/access/:accessId',
+  authorize('HR'),
+  validate(revokeAccessParamSchema),
+  asyncHandler(accessController.revokeAccess)
+);
 
+router.get('/mine', authorize('EMPLOYEE'), asyncHandler(documentController.listMyShared));
 
-router.get('/:id/rag-status', 
-  validate(ragParamSchema), 
-  asyncHandler(ragController.getRagStatus));
-router.post('/:id/chat', 
-  validate(chatSchema), 
-  asyncHandler(ragController.chat));
-router.get('/:id/chat/history', 
-  validate(ragParamSchema), 
-  asyncHandler(ragController.chatHistory));
+router.get('/:id', validate(documentIdParamSchema), asyncHandler(documentController.getDocument));
+router.get(
+  '/:id/download',
+  validate(documentIdParamSchema),
+  asyncHandler(documentController.getDownloadUrl)
+);
+
+router.get('/:id/rag-status', validate(ragParamSchema), asyncHandler(ragController.getRagStatus));
+router.post('/:id/chat', validate(chatSchema), asyncHandler(ragController.chat));
+router.get('/:id/chat/history', validate(ragParamSchema), asyncHandler(ragController.chatHistory));
 
 module.exports = router;

@@ -4,6 +4,8 @@ const authRoutes = require('./auth.routes');
 
 const hrRoutes = require('./hr.routes');
 
+const documentRoutes = require('./document.routes');
+
 const router = express.Router();
 
 router.use('/auth', authRoutes);
