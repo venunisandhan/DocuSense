@@ -17,6 +17,13 @@ const {
 
 const { chatSchema, ragParamSchema } = require('../validators/rag.schema');
 
+const accessController = require('../controllers/access.controller');
+const {
+  grantAccessSchema,
+  revokeAccessParamSchema,
+  documentIdParamSchema: accessDocumentIdParamSchema,
+} = require('../validators/access.schema');
+
 const router = express.Router();
 
 router.use(authenticate);
@@ -32,11 +39,12 @@ router.post(
 
 router.get('/', authorize('HR'), asyncHandler(documentController.listMyUploads));
 
-router.get('/:id', authorize('HR'), validate(documentIdParamSchema), asyncHandler(documentController.getDocument));
+router.get('/mine', authorize('EMPLOYEE'), asyncHandler(documentController.listMyShared));
+
+router.get('/:id', validate(documentIdParamSchema), asyncHandler(documentController.getDocument));
 
 router.get(
   '/:id/download',
-  authorize('HR'),
   validate(documentIdParamSchema),
   asyncHandler(documentController.getDownloadUrl)
 );
@@ -47,6 +55,12 @@ router.patch(
   validate(updateGuidelinesSchema),
   asyncHandler(documentController.updateGuidelines)
 );
+
+router.delete('/:id', authorize('HR'), validate(documentIdParamSchema), asyncHandler(documentController.deleteDocument));
+
+router.post('/:id/access', authorize('HR'), validate(grantAccessSchema), asyncHandler(accessController.grantAccess));
+router.get('/:id/access', authorize('HR'), validate(accessDocumentIdParamSchema), asyncHandler(accessController.listAccess));
+router.delete('/:id/access/:accessId', authorize('HR'), validate(revokeAccessParamSchema), asyncHandler(accessController.revokeAccess));
 
 
 router.get('/:id/rag-status', 

@@ -22,13 +22,18 @@ async function listMyUploads(req, res) {
   res.status(200).json({ success: true, data: { documents } });
 }
 
+async function listMyShared(req, res) {
+  const documents = await documentService.listMyShared(req.user.id);
+  res.status(200).json({ success: true, data: { documents } });
+}
+
 async function getDocument(req, res) {
-  const document = await documentService.getDocumentForOwner(req.params.id, req.user.id);
+  const document = await documentService.getDocumentForUser(req.params.id, req.user);
   res.status(200).json({ success: true, data: { document } });
 }
 
 async function getDownloadUrl(req, res) {
-  const url = await documentService.getDownloadUrlForOwner(req.params.id, req.user.id);
+  const url = await documentService.getDownloadUrlForUser(req.params.id, req.user);
   res.status(200).json({ success: true, data: { url, expiresInSeconds: 300 } });
 }
 
@@ -37,4 +42,17 @@ async function updateGuidelines(req, res) {
   res.status(200).json({ success: true, data: { document } });
 }
 
-module.exports = { upload, listMyUploads, getDocument, getDownloadUrl, updateGuidelines };
+async function deleteDocument(req, res) {
+  const document = await documentService.deleteDocument(req.params.id, req.user.id);
+  res.status(200).json({ success: true, data: { document } });
+}
+
+module.exports = {
+  upload,
+  listMyUploads,
+  listMyShared,
+  getDocument,
+  getDownloadUrl,
+  updateGuidelines,
+  deleteDocument
+};
