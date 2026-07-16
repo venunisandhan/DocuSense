@@ -5,7 +5,12 @@ const env = require('../config/env');
 
 const googleClient = require('../config/googleClient');
 
-const env = require('../config/env');
+const REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
 
 function googleRedirect(req, res) {
   const url = googleClient.generateAuthUrl({
@@ -46,13 +51,6 @@ async function googleComplete(req, res) {
     },
   });
 }
-
-const REFRESH_COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: env.NODE_ENV === 'production',
-  sameSite: 'strict',
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-};
 
 async function register(req, res) {
   const { name, email, password, role } = req.body;
@@ -103,4 +101,28 @@ async function me(req, res) {
   });
 }
 
-module.exports = { register, login, refresh, logout, me };
+async function forgotPassword(req, res) {
+  await authService.forgotPassword(req.body.email);
+  res.status(200).json({
+    success: true,
+    data: { message: 'If an account with that email exists, a reset link has been sent.' },
+  });
+}
+
+async function resetPassword(req, res) {
+  await authService.resetPassword(req.body.token, req.body.newPassword);
+  res.status(200).json({ success: true, data: { message: 'Password has been reset. You can now log in.' } });
+}
+
+module.exports = {
+  register,
+  login,
+  refresh,
+  logout,
+  me,
+  googleRedirect,
+  googleCallback,
+  googleComplete,
+  forgotPassword,
+  resetPassword,
+};
