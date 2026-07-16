@@ -30,4 +30,4 @@ services:
 volumes:
   mongo_data:
   minio_data:
-  redus_data:
+  redis_data:
