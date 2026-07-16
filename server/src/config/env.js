@@ -1,4 +1,3 @@
-
 const {z} = require("zod");
 
 require('dotenv').config();
@@ -9,6 +8,8 @@ const envSchema = z.object({
   MONGO_URI: z.string().min(1, 'MONGO_URI is required'),
   JWT_ACCESS_SECRET: z.string().min(16, 'JWT_ACCESS_SECRET must be at least 16 characters'),
   JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET must be at least 16 characters'),
+
+  CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
 
   S3_ENDPOINT: z.string().url(),
   S3_REGION: z.string().default('us-east-1'),
