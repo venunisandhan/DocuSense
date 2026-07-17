@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
+import api, { setAccessToken } from '../services/api';
 import { Loader2, ArrowRight } from 'lucide-react';
 
 const OAuthChooseRole = () => {
@@ -19,6 +19,7 @@ const OAuthChooseRole = () => {
     setLoading(true);
     try {
       const { data } = await api.post('/auth/google/complete', { token, role });
+      setAccessToken(data.data.accessToken);
       setUser(data.data.user);
       navigate(data.data.user.role === 'HR' ? '/hr' : '/');
     } catch (err) {

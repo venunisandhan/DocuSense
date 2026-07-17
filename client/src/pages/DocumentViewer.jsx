@@ -53,6 +53,14 @@ const DocumentViewer = () => {
   const [chatLoading, setChatLoading] = useState(false);
   const [ragStatus, setRagStatus] = useState('PENDING');
 
+  const containerRef = React.useRef(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [pageNumber]);
+
   useEffect(() => {
     let intervalId;
 
@@ -250,7 +258,7 @@ const DocumentViewer = () => {
         </div>
       </div>
       <div className="flex flex-col lg:flex-row gap-5 h-auto lg:h-[calc(100vh-240px)] min-h-[calc(100vh-240px)]">
-        <div className={`${isChatOpen ? 'flex-[3]' : 'flex-1'} glass rounded-3xl overflow-auto custom-scrollbar flex flex-col items-center transition-all duration-300 h-[75vh] lg:h-auto min-h-[400px] lg:min-h-0 relative`}>
+        <div ref={containerRef} className={`${isChatOpen ? 'flex-[3]' : 'flex-1'} glass rounded-3xl overflow-auto custom-scrollbar flex flex-col items-center transition-all duration-300 h-[75vh] lg:h-auto min-h-[400px] lg:min-h-0 relative`}>
           {isPDF && pdfUrl ? (
             <>
               {pdfLoading && (
