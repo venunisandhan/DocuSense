@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Loader2, Cpu, AlertCircle, ArrowRight } from 'lucide-react';
 import { login } from '../services/auth.service';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -18,17 +19,24 @@ const Login = () => {
     try {
       const data = await login(formData);
       setUser(data.user);
-      navigate('/');
+      if (data.user.role === 'HR') {
+        navigate('/hr');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      setError(err.response?.data?.error?.message || err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-alice-blue">
-      {/* Background elements */}
       <div className="absolute top-0 left-0 w-full h-full -z-10">
         <div className="absolute top-1/4 -left-20 w-80 h-80 bg-sky-blue/20 blob blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-tangerine/10 blob blur-3xl animate-pulse delay-700"></div>
@@ -70,7 +78,6 @@ const Login = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between ml-1">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Password</label>
-              <button type="button" className="text-[10px] font-bold text-sky-blue hover:underline">Forgot password?</button>
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -105,6 +112,7 @@ const Login = () => {
 
           <button 
             type="button"
+            onClick={handleGoogleLogin}
             className="w-full glass-button bg-white text-slate-700 flex items-center justify-center gap-3 border border-slate-200 py-4 cursor-pointer"
           >
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />

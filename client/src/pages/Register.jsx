@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, User, Loader2, Cpu, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User, Loader2, Cpu, AlertCircle, ArrowRight, ShieldCheck, Briefcase } from 'lucide-react';
 import { register } from '../services/auth.service';
 import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -18,9 +18,13 @@ const Register = () => {
     try {
       const data = await register(formData);
       setUser(data.user);
-      navigate('/');
+      if (data.user.role === 'HR') {
+        navigate('/hr');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(err.response?.data?.error?.message || err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -28,7 +32,6 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-alice-blue">
-      {/* Background elements */}
       <div className="absolute top-0 left-0 w-full h-full -z-10">
         <div className="absolute top-1/4 -right-20 w-80 h-80 bg-sky-blue/20 blob blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 -left-20 w-80 h-80 bg-tangerine/10 blob blur-3xl animate-pulse delay-700"></div>
@@ -79,6 +82,23 @@ const Register = () => {
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
                 className="w-full glass-input pl-12 py-4"
               />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Role</label>
+            <div className="relative">
+              <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <select
+                required
+                value={formData.role}
+                onChange={(e) => setFormData({...formData, role: e.target.value})}
+                className="w-full glass-input pl-12 py-4 appearance-none"
+              >
+                <option value="" disabled>Select your role</option>
+                <option value="HR">HR Manager</option>
+                <option value="EMPLOYEE">Employee</option>
+              </select>
             </div>
           </div>
 

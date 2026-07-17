@@ -3,6 +3,8 @@ import { Send, X, Bot, User, Loader2, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -91,7 +93,15 @@ const ChatBot = ({ isOpen, onClose }) => {
                 ? "bg-sky-blue text-white rounded-tr-none" 
                 : "bg-white/60 text-slate-800 border border-white/80 rounded-tl-none shadow-sm"
             )}>
-              {msg.content}
+              {msg.role === 'user' ? (
+                msg.content
+              ) : (
+                <div className="prose prose-sm prose-slate max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
+              )}
             </div>
           </div>
         ))}
