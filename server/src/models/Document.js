@@ -41,6 +41,15 @@ const documentSchema = new mongoose.Schema(
       default: '',
       maxlength: 5000,
     },
+    accessLevel: {
+      type: String,
+      enum: ['Public', 'HR', 'Private'],
+      default: 'Public',
+    },
+    tags: [{
+      type: String,
+      trim: true,
+    }],
     ragStatus: {
       type: String,
       enum: ['PENDING', 'PROCESSING', 'READY', 'FAILED'],

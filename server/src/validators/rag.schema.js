@@ -21,4 +21,10 @@ const chatSchema = z.object({
   }),
 });
 
-module.exports = { ragParamSchema, chatSchema };
+const globalChatSchema = z.object({
+  body: z.object({
+    question: z.string().min(1).max(500),
+  }),
+});
+
+module.exports = { ragParamSchema, chatSchema, globalChatSchema };

@@ -94,7 +94,7 @@ async function revokeAccess(documentId, accessId, ownerId) {
   const access = await DocumentAccess.findOneAndUpdate(
     { _id: accessId, document: documentId, isRevoked: false },
     { $set: { isRevoked: true } },
-    { new: true }
+    { returnDocument: 'after' }
   );
 
   if (!access) {

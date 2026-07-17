@@ -16,7 +16,7 @@ const {
   updateGuidelinesSchema,
 } = require('../validators/document.schema');
 
-const { chatSchema, ragParamSchema } = require('../validators/rag.schema');
+const { chatSchema, ragParamSchema, globalChatSchema } = require('../validators/rag.schema');
 
 const {
   grantAccessSchema,
@@ -36,7 +36,13 @@ router.post(
   asyncHandler(documentController.upload)
 );
 
-router.get('/', authorize('HR'), asyncHandler(documentController.listMyUploads));
+router.get('/', asyncHandler(async (req, res) => {
+  if (req.user.role === 'HR') {
+    return documentController.listMyUploads(req, res);
+  } else {
+    return documentController.listMyShared(req, res);
+  }
+}));
 
 router.patch(
   '/:id/guidelines',
@@ -72,6 +78,8 @@ router.delete(
 );
 
 router.get('/mine', authorize('EMPLOYEE'), asyncHandler(documentController.listMyShared));
+
+router.post('/query', validate(globalChatSchema), asyncHandler(ragController.globalChat));
 
 router.get('/:id', validate(documentIdParamSchema), asyncHandler(documentController.getDocument));
 router.get(

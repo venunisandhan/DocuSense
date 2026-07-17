@@ -8,10 +8,31 @@ async function upload(req, res) {
     throw new ApiError(400, 'A file is required', 'FILE_REQUIRED');
   }
 
+  const buffer = req.file.buffer;
+  let isValidContent = false;
+  
+  if (req.file.mimetype === 'application/pdf') {
+    isValidContent = buffer.length > 4 && buffer.toString('utf8', 0, 5) === '%PDF-';
+  } else if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    isValidContent = buffer.length > 4 && buffer.toString('hex', 0, 4) === '504b0304';
+  } else if (req.file.mimetype === 'text/plain') {
+    isValidContent = true;
+  }
+
+  if (!isValidContent) {
+    throw new ApiError(400, 'Invalid file content. Spoofed or corrupted file detected.', 'FILE_TYPE_MISMATCH');
+  }
+
+  const tagsStr = req.body.tags || '';
+  const tags = tagsStr.split(',').map(t => t.trim()).filter(t => t.length > 0);
+  const accessLevel = req.body.accessLevel || 'Public';
+
   const document = await documentService.uploadDocument({
     title: req.body.title,
     file: req.file,
     uploadedBy: req.user.id,
+    accessLevel,
+    tags,
   });
 
   res.status(201).json({ success: true, data: { document } });

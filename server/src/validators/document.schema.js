@@ -10,6 +10,8 @@ const objectIdSchema = z.string().refine(
 const uploadDocumentSchema = z.object({
   body: z.object({
     title: z.string().trim().min(2, 'Title must be at least 2 characters').max(200),
+    accessLevel: z.enum(['Public', 'HR', 'Private']).optional(),
+    tags: z.string().optional(),
   }),
 });
 
