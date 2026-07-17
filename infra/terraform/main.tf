@@ -12,13 +12,10 @@ provider "aws" {
   region = var.aws_region
 }
 
-data "aws_ami" "amazon_linux_2023" {
-  most_recent = true
-  owners      = ["amazon"]
-  filter {
-    name   = "name"
-    values = ["al2023-ami-*-x86_64"]
-  }
+# Hardcoded AMI to avoid requiring ec2:DescribeImages permission.
+# AMI: al2023-ami-2023.12.20260710.0-kernel-6.18-x86_64 (ap-south-1, fetched 2026-07-17)
+locals {
+  amazon_linux_2023_ami = "ami-0b910d1016287a5e7"
 }
 
 resource "aws_s3_bucket" "documents" {
@@ -113,7 +110,7 @@ resource "aws_key_pair" "deployer" {
 }
 
 resource "aws_instance" "docusense" {
-  ami                    = data.aws_ami.amazon_linux_2023.id
+  ami                    = local.amazon_linux_2023_ami
   instance_type          = var.instance_type
   key_name               = aws_key_pair.deployer.key_name
   vpc_security_group_ids = [aws_security_group.docusense.id]
@@ -121,7 +118,7 @@ resource "aws_instance" "docusense" {
 
   root_block_device {
     volume_size = 20
-    volume_type = "gp3"
+    volume_type = "gp2"
   }
 
   user_data = templatefile("${path.module}/user_data.sh", {
