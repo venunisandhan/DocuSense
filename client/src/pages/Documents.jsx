@@ -18,6 +18,7 @@ import {
   Check,
   Users,
   User,
+  Infinity as InfinityIcon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getDocuments, uploadDocument, deleteDocument } from '../services/document.service';
@@ -189,13 +190,14 @@ const ShareModal = ({ doc, onClose }) => {
                     type="button"
                     onClick={() => setAccessType(type)}
                     className={cn(
-                      'py-2.5 rounded-xl text-sm font-bold border transition-all cursor-pointer',
+                      'py-2.5 rounded-xl text-sm font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5',
                       accessType === type
-                        ? 'bg-sky-blue/10 border-sky-blue/40 text-sky-blue'
-                        : 'border-white/40 text-slate-500 hover:bg-white/40'
+                        ? 'bg-sky-blue border-sky-blue text-white shadow-md shadow-sky-blue/30'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                     )}
                   >
-                    {type === 'LIFETIME' ? '♾ Lifetime' : '⏱ Expiring'}
+                    {type === 'LIFETIME' ? <InfinityIcon className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                    {type === 'LIFETIME' ? 'Lifetime' : 'Expiring'}
                   </button>
                 ))}
               </div>

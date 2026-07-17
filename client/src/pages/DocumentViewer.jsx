@@ -258,7 +258,8 @@ const DocumentViewer = () => {
         </div>
       </div>
       <div className="flex flex-col lg:flex-row gap-5 h-auto lg:h-[calc(100vh-240px)] min-h-[calc(100vh-240px)]">
-        <div ref={containerRef} className={`${isChatOpen ? 'flex-[3]' : 'flex-1'} glass rounded-3xl overflow-auto custom-scrollbar flex flex-col items-center transition-all duration-300 h-[75vh] lg:h-auto min-h-[400px] lg:min-h-0 relative`}>
+        <div className={`${isChatOpen ? 'flex-[3]' : 'flex-1'} glass rounded-3xl transition-all duration-300 h-[75vh] lg:h-auto min-h-[400px] lg:min-h-0 relative flex flex-col overflow-hidden`}>
+          <div ref={containerRef} className="flex-1 overflow-auto custom-scrollbar flex flex-col items-center">
           {isPDF && pdfUrl ? (
             <>
               {pdfLoading && (
@@ -294,28 +295,6 @@ const DocumentViewer = () => {
                   className="shadow-xl rounded-lg overflow-hidden"
                 />
               </Document>
-
-              {numPages && (
-                <div className="sticky bottom-0 w-full bg-white/70 backdrop-blur-sm border-t border-white/40 py-3 flex items-center justify-center gap-4">
-                  <button
-                    onClick={() => setPageNumber(p => Math.max(1, p - 1))}
-                    disabled={pageNumber <= 1}
-                    className="p-2 glass-button disabled:opacity-30 cursor-pointer"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <span className="text-sm font-bold text-slate-600">
-                    Page {pageNumber} of {numPages}
-                  </span>
-                  <button
-                    onClick={() => setPageNumber(p => Math.min(numPages, p + 1))}
-                    disabled={pageNumber >= numPages}
-                    className="p-2 glass-button disabled:opacity-30 cursor-pointer"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
             </>
           ) : isText && pdfUrl ? (
             <TextViewer url={pdfUrl} />
@@ -330,7 +309,30 @@ const DocumentViewer = () => {
               </button>
             </div>
           )}
+          </div>
+          {isPDF && numPages && (
+            <div className="w-full bg-white/70 backdrop-blur-sm border-t border-white/40 py-3 flex items-center justify-center gap-4 shrink-0">
+              <button
+                onClick={() => setPageNumber(p => Math.max(1, p - 1))}
+                disabled={pageNumber <= 1}
+                className="p-2 glass-button disabled:opacity-30 cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm font-bold text-slate-600">
+                Page {pageNumber} of {numPages}
+              </span>
+              <button
+                onClick={() => setPageNumber(p => Math.min(numPages, p + 1))}
+                disabled={pageNumber >= numPages}
+                className="p-2 glass-button disabled:opacity-30 cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
+
         {isChatOpen && (
           <div className="flex-[2] glass rounded-3xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
             <div className="p-4 border-b border-white/20 flex items-center justify-between">
