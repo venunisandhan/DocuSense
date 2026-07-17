@@ -5,7 +5,7 @@ require('dotenv').config();
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(5000),
-  COOKIE_SECURE: z.coerce.boolean().default(false),
+  COOKIE_SECURE: z.preprocess((v) => v === undefined ? undefined : v === 'true' || v === true, z.boolean().default(false)),
   MONGO_URI: z.string().min(1, 'MONGO_URI is required'),
   JWT_ACCESS_SECRET: z.string().min(16, 'JWT_ACCESS_SECRET must be at least 16 characters'),
   JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET must be at least 16 characters'),
@@ -15,7 +15,7 @@ const envSchema = z.object({
   S3_BUCKET: z.string().min(1, 'S3_BUCKET is required'),
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
-  S3_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
+  S3_FORCE_PATH_STYLE: z.preprocess((v) => v === undefined ? undefined : v === 'true' || v === true, z.boolean().default(true)),
   GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
   GEMINI_EMBEDDING_MODEL: z.string().default('gemini-embedding-2'),
   GEMINI_GENERATION_MODEL: z.string().default('gemini-3.1-flash-lite'),
