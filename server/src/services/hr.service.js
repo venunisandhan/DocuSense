@@ -3,7 +3,7 @@ const User = require('../models/User');
 
 const Group = require('../models/Group');
 
-const DocumentAccess = require('../models/DocumentAccess'); // will exist once you build documents; stub-safe to import now
+const DocumentAccess = require('../models/DocumentAccess');
 
 const ApiError = require('../utils/ApiError');
 
@@ -23,17 +23,19 @@ async function searchDirectory(query, excludeUserId) {
 }
 
 async function createGroup({ name, memberIds, createdBy }) {
-  const validMembers = await User.find({
-    _id: { $in: memberIds },
-    role: 'EMPLOYEE',
-    isActive: true,
-  }).select('_id');
+  if (memberIds && memberIds.length > 0) {
+    const validMembers = await User.find({
+      _id: { $in: memberIds },
+      role: 'EMPLOYEE',
+      isActive: true,
+    }).select('_id');
 
-  if (validMembers.length !== memberIds.length) {
-    throw new ApiError(400, 'One or more selected members are invalid or not employees', 'INVALID_MEMBERS');
+    if (validMembers.length !== memberIds.length) {
+      throw new ApiError(400, 'One or more selected members are invalid or not employees', 'INVALID_MEMBERS');
+    }
   }
 
-  const group = await Group.create({ name, createdBy, members: memberIds });
+  const group = await Group.create({ name, createdBy, members: memberIds || [] });
   return group;
 }
 

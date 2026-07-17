@@ -27,16 +27,6 @@ const userSchema = new mongoose.Schema(
       },
       select: false,
     },
-    resetPasswordTokenHash: {
-      type: String,
-      default: null,
-      select: false,
-    },
-    resetPasswordExpiresAt: {
-      type: Date,
-      default: null,
-      select: false,
-    },
     authProvider: {
       type: String,
       enum: ['LOCAL', 'GOOGLE'],

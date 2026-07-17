@@ -12,6 +12,9 @@ const mongoSanitize = require('express-mongo-sanitize');
 
 const routes = require('./routes');
 
+const rateLimit = require('express-rate-limit');
+
+
 const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
@@ -32,7 +35,13 @@ app.use(cookieParser());
 
 app.use(mongoSanitize());
 
-app.use('/api/v1', routes);
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { success: false, error: { code: 'TOO_MANY_REQUESTS', message: 'Too many requests, please try again later.' } },
+});
+
+app.use('/api/v1', limiter, routes);
 
 app.use(errorHandler);
 
