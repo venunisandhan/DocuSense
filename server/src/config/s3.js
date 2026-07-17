@@ -1,18 +1,21 @@
-
 const { S3Client, HeadBucketCommand, CreateBucketCommand } = require('@aws-sdk/client-s3');
 
 const env = require('./env');
 
 const logger = require('../utils/logger');
 
+const hasExplicitCredentials = Boolean(env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY);
+
 const s3Client = new S3Client({
   endpoint: env.S3_ENDPOINT,
   region: env.S3_REGION,
   forcePathStyle: env.S3_FORCE_PATH_STYLE,
-  credentials: {
-    accessKeyId: env.S3_ACCESS_KEY_ID,
-    secretAccessKey: env.S3_SECRET_ACCESS_KEY,
-  },
+  ...(hasExplicitCredentials && {
+    credentials: {
+      accessKeyId: env.S3_ACCESS_KEY_ID,
+      secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+    },
+  }),
 });
 
 async function ensureBucketExists() {

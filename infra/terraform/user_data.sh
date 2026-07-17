@@ -8,16 +8,22 @@ systemctl start docker
 
 mkdir -p /usr/local/lib/docker/cli-plugins
 curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 \
-  -o /usr/local/lib/docker/cli-plugins/docker-compose
+-o /usr/local/lib/docker/cli-plugins/docker-compose
 chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+# Add 2GB swap — t3.micro only has 1GB RAM
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
 cd /opt
 git clone ${REPO_URL} docusense
 cd docusense
 
 cat > infra/.env <<EOF
-MONGO_USER=${MONGO_USER}
-MONGO_PASSWORD=${MONGO_PASSWORD}
+MONGO_URI=${MONGO_URI}
 
 JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
 JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
@@ -38,13 +44,6 @@ GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
 GOOGLE_REDIRECT_URI=${CLIENT_ORIGIN}/api/v1/auth/google/callback
 
 EOF
-
-# Add 2GB swap — t3.micro only has 1GB RAM
-fallocate -l 2G /swapfile
-chmod 600 /swapfile
-mkswap /swapfile
-swapon /swapfile
-echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
 cd infra
 docker compose -f docker-compose.prod.yml --env-file .env up -d --build

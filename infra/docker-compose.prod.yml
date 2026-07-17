@@ -1,14 +1,5 @@
 services:
 
-  mongo:
-    image: mongodb/mongodb-atlas-local:latest
-    restart: always
-    environment:
-      MONGODB_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGODB_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-    volumes:
-      - mongo_data:/data/db
-
   redis:
     image: redis:7-alpine
     restart: always
@@ -21,12 +12,11 @@ services:
       dockerfile: Dockerfile
     restart: always
     depends_on:
-      - mongo
       - redis
     environment:
       NODE_ENV: production
       PORT: 5000
-      MONGO_URI: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/docusense?authSource=admin&directConnection=true
+      MONGO_URI: ${MONGO_URI}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       PENDING_ROLE_TOKEN_SECRET: ${PENDING_ROLE_TOKEN_SECRET}
@@ -64,5 +54,4 @@ services:
       - "80:80"
 
 volumes:
-  mongo_data:
   redis_data:
