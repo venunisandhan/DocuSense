@@ -24,7 +24,7 @@ resource "aws_s3_bucket_cors_configuration" "documents" {
   bucket = aws_s3_bucket.documents.id
   cors_rule {
     allowed_methods = ["GET"]
-    allowed_origins = ["http://${aws_eip.docusense.public_ip}.nip.io"]
+    allowed_origins = ["*"]
     allowed_headers = ["*"]
     max_age_seconds = 3000
   }
