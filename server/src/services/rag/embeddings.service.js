@@ -1,22 +1,16 @@
-
-const { InvokeModelCommand } = require('@aws-sdk/client-bedrock-runtime');
-
-const bedrockClient = require('../../config/bedrock');
-
+const ai = require('../../config/gemini');
 const env = require('../../config/env');
 
 async function embedText(text) {
-  const command = new InvokeModelCommand({
-    modelId: env.BEDROCK_EMBEDDING_MODEL_ID,
-    contentType: 'application/json',
-    accept: 'application/json',
-    body: JSON.stringify({ inputText: text }),
+  const response = await ai.models.embedContent({
+    model: env.GEMINI_EMBEDDING_MODEL,
+    contents: text,
+    config: {
+      outputDimensionality: 1024
+    }
   });
 
-  const response = await bedrockClient.send(command);
-  const responseBody = JSON.parse(new TextDecoder().decode(response.body));
-
-  return responseBody.embedding;
+  return response.embeddings[0].values;
 }
 
 module.exports = { embedText };

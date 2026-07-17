@@ -85,4 +85,8 @@ worker.on('failed', (job, err) => {
   logger.error(`RAG job ${job.id} failed after retries`, { error: err.message });
 });
 
+worker.on('error', err => {
+  logger.error(`BullMQ Worker encountered an error`, { error: err.message });
+});
+
 module.exports = worker;
