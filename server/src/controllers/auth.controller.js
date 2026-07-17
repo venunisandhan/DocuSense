@@ -1,4 +1,3 @@
-
 const authService = require('../services/auth.service');
 
 const env = require('../config/env');
@@ -7,7 +6,7 @@ const googleClient = require('../config/googleClient');
 
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: env.NODE_ENV === 'production',
+  secure: env.COOKIE_SECURE,
   sameSite: 'strict',
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };

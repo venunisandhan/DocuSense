@@ -93,7 +93,7 @@ const AppLayout = ({ children, title, hideWelcome = false }) => {
       <div className="fixed -bottom-24 -right-24 w-96 h-96 bg-tangerine/5 blob blur-3xl -z-10 animate-pulse delay-700"></div>
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 md:hidden" 
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 md:hidden" 
           onClick={() => setIsMobileMenuOpen(false)}
         ></div>
       )}

@@ -20,6 +20,15 @@ resource "aws_s3_bucket" "documents" {
   force_destroy = false
   tags = { Name = "docusense-documents" }
 }
+resource "aws_s3_bucket_cors_configuration" "documents" {
+  bucket = aws_s3_bucket.documents.id
+  cors_rule {
+    allowed_methods = ["GET"]
+    allowed_origins = ["http://${aws_eip.docusense.public_ip}.nip.io"]
+    allowed_headers = ["*"]
+    max_age_seconds = 3000
+  }
+}
 resource "aws_s3_bucket_public_access_block" "documents" {
   bucket                  = aws_s3_bucket.documents.id
   block_public_acls       = true
