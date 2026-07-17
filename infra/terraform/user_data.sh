@@ -39,5 +39,12 @@ GOOGLE_REDIRECT_URI=${CLIENT_ORIGIN}/api/v1/auth/google/callback
 
 EOF
 
+# Add 2GB swap — t3.micro only has 1GB RAM
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
 cd infra
 docker compose -f docker-compose.prod.yml --env-file .env up -d --build
