@@ -110,7 +110,7 @@ resource "aws_instance" "docusense" {
     JWT_ACCESS_SECRET         = var.jwt_access_secret
     JWT_REFRESH_SECRET        = var.jwt_refresh_secret
     PENDING_ROLE_TOKEN_SECRET = var.pending_role_token_secret
-    CLIENT_ORIGIN             = "http://${aws_eip.docusense.public_ip}"
+    CLIENT_ORIGIN             = "http://${aws_eip.docusense.public_ip}.nip.io"
     S3_REGION                 = var.aws_region
     S3_BUCKET                 = var.s3_bucket_name
     S3_ACCESS_KEY_ID          = ""
