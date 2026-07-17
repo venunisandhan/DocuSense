@@ -10,13 +10,12 @@
 graph TB
     subgraph Client["🖥️ Client (React + Vite)"]
         UI["Pages & Components"]
-        AUTH_CTX["Auth Context"]
         AXIOS["Axios (interceptors)"]
     end
 
     subgraph Server["⚙️ Server (Node.js / Express)"]
         ROUTES["Routes /api/v1"]
-        MW["Middlewares\n(auth, role, ownership)"]
+        MW["Middlewares\n(auth · role · ownership)"]
         CTRL["Controllers"]
         SVC["Services"]
         QUEUE["BullMQ Queue"]
@@ -25,29 +24,25 @@ graph TB
 
     subgraph Storage["💾 Storage"]
         MONGO[("MongoDB\n+ Vector Index")]
-        REDIS[("Redis\n(job queue)")]
-        S3["AWS S3\n(file blobs)"]
+        REDIS[("Redis")]
+        S3["AWS S3"]
     end
 
     subgraph AI["🤖 Google Gemini"]
-        EMBED["gemini-embedding-2\n(768-dim vectors)"]
-        GEN["gemini-3.1-flash-lite\n(answer generation)"]
+        EMBED["gemini-embedding-2"]
+        GEN["gemini-3.1-flash-lite"]
     end
 
-    UI --> AXIOS --> ROUTES
-    ROUTES --> MW --> CTRL --> SVC
-    SVC --> MONGO
-    SVC --> S3
-    CTRL --> QUEUE --> REDIS
-    REDIS --> WORKER
+    UI --> AXIOS --> ROUTES --> MW --> CTRL --> SVC
+    SVC --> MONGO & S3
+    CTRL --> QUEUE --> REDIS --> WORKER
     WORKER --> EMBED --> MONGO
-    SVC --> EMBED
-    SVC --> GEN
+    SVC --> EMBED & GEN
 ```
 
 ---
 
-## Technology Stack
+## Stack
 
 | Layer | Tech |
 |---|---|
@@ -60,70 +55,29 @@ graph TB
 | File Storage | AWS S3 (MinIO locally — same API) |
 | Auth | JWT (15 min access token + httpOnly refresh cookie) + Google OAuth 2.0 |
 | Validation | Zod — env vars and all request bodies |
-| Logging | Winston |
 | Infra | Docker Compose + Terraform (EC2, S3, IAM, Elastic IP) |
 
 ---
 
-## Role Permissions
+## Roles
 
-```mermaid
-graph LR
-    subgraph HR["👔 HR Role"]
-        H1["Upload documents"]
-        H2["Write usage notes"]
-        H3["Share with users / groups"]
-        H4["Set access expiry"]
-        H5["Revoke access"]
-        H6["Search employee directory"]
-        H7["Create & manage groups"]
-        H8["Download own uploads"]
-        H9["Chat with own documents"]
-    end
+| Action | HR | Employee |
+|---|---|---|
+| Upload documents | ✓ | |
+| Write usage notes | ✓ | |
+| Share / revoke access, set expiry | ✓ | |
+| Search employee directory | ✓ | |
+| Create and manage groups | ✓ | |
+| See documents shared with them | | ✓ |
+| Read usage notes | ✓ | ✓ |
+| Download files | own uploads | if access is active |
+| Ask the AI assistant | own uploads | anything they can access |
 
-    subgraph EMP["👤 Employee Role"]
-        E1["See documents shared with them"]
-        E2["Read usage notes"]
-        E3["Download shared files"]
-        E4["Chat with accessible documents"]
-    end
-
-    subgraph BOTH["✅ Both Roles"]
-        B1["Login with email/password"]
-        B2["Login with Google OAuth"]
-        B3["Silent session refresh"]
-    end
-```
-
-> **All permissions are enforced server-side on every request. The client cannot bypass them.**
+All permissions are enforced server-side on every request.
 
 ---
 
-## Authentication Flow
-
-### Local Auth (Email + Password)
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant C as Client
-    participant S as Server
-    participant DB as MongoDB
-
-    U->>C: Enter email + password
-    C->>S: POST /auth/login
-    S->>DB: Find user, compare bcrypt hash
-    DB-->>S: User record
-    S-->>C: { accessToken } + Set-Cookie: refreshToken (httpOnly)
-    C->>C: Store accessToken in memory (Auth Context)
-
-    Note over C,S: Every API call includes accessToken in Authorization header
-
-    Note over C,S: When accessToken expires (15 min)...
-    C->>S: POST /auth/refresh (sends cookie automatically)
-    S->>S: Verify refresh token
-    S-->>C: New accessToken
-```
+## Authentication
 
 ### Google OAuth Flow
 
@@ -136,267 +90,165 @@ sequenceDiagram
 
     U->>C: Click "Sign in with Google"
     C->>S: GET /auth/google
-    S->>G: Redirect to Google consent screen
+    S->>G: Redirect to consent screen
     G->>U: Show consent screen
     U->>G: Approve
     G->>S: GET /auth/google/callback?code=...
     S->>G: Exchange code for profile
     G-->>S: { email, name, picture }
 
-    alt First-time user (no account)
+    alt First-time user
         S-->>C: Redirect with pending token
         C->>U: Show "Pick your role" screen
         U->>C: Choose HR or Employee
-        C->>S: POST /auth/google/complete { role, pendingToken }
-        S->>DB: Create user account
-        S-->>C: { accessToken } + Set-Cookie: refreshToken
+        C->>S: POST /auth/google/complete
+        S-->>C: accessToken + Set-Cookie: refreshToken (httpOnly)
     else Returning user
-        S-->>C: Redirect with accessToken in URL param
-        C->>C: Extract token, store in context
+        S-->>C: accessToken in redirect
     end
+
+    Note over C,S: accessToken expires in 15 min — silent refresh via cookie
 ```
+
+Local auth (email + bcrypt password) follows the same token pattern without the OAuth steps.
 
 ---
 
 ## RAG Pipeline
 
-### Upload & Indexing (Background Job)
-
 ```mermaid
-flowchart TD
-    A["HR uploads file\nPOST /documents"] --> B["Server validates MIME type"]
-    B --> C["Upload original file to S3"]
-    C --> D["Create Document record in MongoDB\nstatus: pending"]
-    D --> E["Enqueue RAG job → BullMQ / Redis"]
-    E --> F["Return 201 to client immediately"]
-
-    E -.->|"background"| G["RAG Worker picks up job"]
-    G --> H{"File type?"}
-    H -->|"PDF"| I["pdf-parse → raw text"]
-    H -->|"DOCX"| J["mammoth → plain text"]
-    H -->|"TXT"| K["read directly"]
-
-    I & J & K --> L["Split text into chunks\n2000 chars, 200 overlap"]
-    L --> M["For each chunk:\nGemini gemini-embedding-2\n→ 768-dim vector"]
-    M --> N["Store chunks + vectors\nin MongoDB DocumentChunk collection"]
-    N --> O["Update Document status: ready"]
-    O --> P["Client polls /rag-status\n→ Chat tab unlocks"]
-
-    style G fill:#1e3a5f,color:#fff
-    style E fill:#0f4c81,color:#fff
-```
-
-### Chat / Question Answering
-
-```mermaid
-flowchart TD
-    A["User asks a question\nPOST /documents/:id/chat"] --> B["Embed question\ngemini-embedding-2 → vector"]
-    B --> C["MongoDB Vector Search\nagainst this document's chunks"]
-    C --> D{"Any chunk\nsimilarity ≥ 0.5?"}
-
-    D -->|"No"| E["Return:\n'I don't know'\nGemini NOT called"]
-    D -->|"Yes"| F["Collect top-k matching chunks"]
-    F --> G["Build prompt:\n'Using ONLY these passages, answer the question'"]
-    G --> H["Call gemini-3.1-flash-lite\nwith document-only context"]
-    H --> I["Return answer + source chunk references"]
-    I --> J["Save to ChatHistory in MongoDB"]
-
-    style E fill:#7b1c1c,color:#fff
-    style H fill:#1a4731,color:#fff
-```
-
----
-
-## Document Access Control
-
-```mermaid
-flowchart TD
-    A["Request: GET /documents/:id"] --> B{"Is user\nauthenticated?"}
-    B -->|"No"| ERR1["401 Unauthorized"]
-    B -->|"Yes"| C{"Is user the\ndocument owner?"}
-    C -->|"Yes (HR)"| DOC["Return document"]
-    C -->|"No"| D{"Does user have\nan active access grant?"}
-    D -->|"No"| ERR2["404 Not Found\n(existence not revealed)"]
-    D -->|"Yes"| E{"Is grant expired?"}
-    E -->|"Yes"| ERR3["403 Access Expired"]
-    E -->|"No"| DOC
-
-    subgraph Access Grant
-        AG1["Granted to: user OR group"]
-        AG2["Optional: expiresAt date"]
-        AG3["Can be revoked anytime by HR"]
-    end
-```
-
----
-
-## Document Viewer
-
-```mermaid
-graph LR
-    subgraph Viewer["Built-in Document Viewer"]
+flowchart LR
+    subgraph Upload["📤 On Upload (background)"]
         direction TB
-        PDF["📄 PDF\nreact-pdf\nzoom + page nav"]
-        DOCX["📝 DOCX\nmammoth → HTML\nin-browser render"]
-        TXT["📃 TXT\nmonospace\nplain text"]
+        A["HR uploads file"] --> B["S3 store + MongoDB record\nstatus: pending"]
+        B --> C["Enqueue job → BullMQ"]
+        C -.->|async| D["Worker: extract text\nPDF · DOCX · TXT"]
+        D --> E["Split into chunks\n2000 chars / 200 overlap"]
+        E --> F["Embed each chunk\ngemini-embedding-2 → 768-dim vector"]
+        F --> G["Store in MongoDB\nstatus: ready"]
     end
 
-    subgraph Chat["AI Chat Panel"]
-        INLINE["📎 Inline DocuBot\n(per-document viewer)"]
-        GLOBAL["🌐 DocuSense AI\n(dashboard — all docs)"]
+    subgraph Chat["💬 On Question"]
+        direction TB
+        H["User asks question"] --> I["Embed question → vector"]
+        I --> J["MongoDB Vector Search\nagainst document chunks"]
+        J --> K{"similarity ≥ 0.5?"}
+        K -->|No| L["Return: I don't know\nGemini not called"]
+        K -->|Yes| M["Build prompt with\nmatching passages only"]
+        M --> N["gemini-3.1-flash-lite\n→ answer + source refs"]
     end
 
-    PDF & DOCX & TXT --> INLINE
-    INLINE -.->|"float button"| GLOBAL
+    G -.->|"Chat tab unlocks"| H
+
+    style L fill:#7b1c1c,color:#fff
+    style N fill:#1a4731,color:#fff
 ```
 
 ---
 
-## API Reference
+## API
 
-### Auth — `/api/v1/auth`
+Base: `/api/v1` — all responses: `{ success, data }` or `{ success: false, error }`.
 
-```mermaid
-graph LR
-    R["/register\nPOST"] --> A["Create HR or Employee account"]
-    L["/login\nPOST"] --> B["Returns accessToken + sets cookie"]
-    RF["/refresh\nPOST"] --> C["Silent refresh via httpOnly cookie"]
-    LO["/logout\nPOST"] --> D["Clears refresh cookie"]
-    ME["/me\nGET"] --> E["Current user profile"]
-    GO["/google\nGET"] --> F["Start OAuth flow"]
-    GC["/google/callback\nGET"] --> G["Handle Google redirect"]
-    GK["/google/complete\nPOST"] --> H["Set role for first-time Google user"]
-```
+**Auth** `/auth`
 
-### Documents — `/api/v1/documents`
+| Method | Path | Description |
+|---|---|---|
+| POST | `/register` | Register as HR or Employee |
+| POST | `/login` | Returns access token, sets refresh cookie |
+| POST | `/refresh` | Silent token refresh via cookie |
+| POST | `/logout` | Clears refresh cookie |
+| GET | `/me` | Current user profile |
+| GET | `/google` | Start Google OAuth flow |
+| GET | `/google/callback` | Google OAuth redirect handler |
+| POST | `/google/complete` | Set role for first-time Google user |
 
-```mermaid
-graph LR
-    subgraph HR_Only["🔒 HR Only"]
-        UP["POST /\nUpload file"]
-        GU["PATCH /:id/guidelines\nEdit usage notes"]
-        DEL["DELETE /:id\nSoft delete"]
-        GA["POST /:id/access\nGrant access"]
-        LA["GET /:id/access\nList grants"]
-        RA["DELETE /:id/access/:accessId\nRevoke grant"]
-    end
+**Documents** `/documents`
 
-    subgraph Shared["🔓 Owner or Granted"]
-        GD["GET /:id\nDocument metadata"]
-        DL["GET /:id/download\nPresigned S3 URL (5 min)"]
-        RS["GET /:id/rag-status\nIs AI ready?"]
-        CH["POST /:id/chat\nAsk AI a question"]
-        HI["GET /:id/chat/history\nPast conversations"]
-    end
+| Method | Path | Who | Description |
+|---|---|---|---|
+| POST | `/` | HR | Upload a file (triggers background RAG) |
+| GET | `/` | Both | HR → own uploads · Employee → shared docs |
+| GET | `/:id` | Owner or granted | Document metadata + usage notes |
+| GET | `/:id/download` | Owner or granted | Presigned S3 URL (5 min) |
+| PATCH | `/:id/guidelines` | HR owner | Edit usage notes |
+| DELETE | `/:id` | HR owner | Soft delete, revokes all access |
+| POST | `/:id/access` | HR owner | Grant access to user or group |
+| GET | `/:id/access` | HR owner | List active grants |
+| DELETE | `/:id/access/:accessId` | HR owner | Revoke one grant |
+| GET | `/:id/rag-status` | Owner or granted | Is AI processing complete? |
+| POST | `/:id/chat` | Owner or granted | Ask the AI a question |
+| GET | `/:id/chat/history` | Owner or granted | Past Q&A |
 
-    subgraph List["📋 Role-based list"]
-        LS["GET /\nHR → own uploads\nEmployee → shared docs"]
-    end
-```
+**HR** `/hr`
 
-### HR — `/api/v1/hr`
-
-```mermaid
-graph LR
-    DS["/directory/search?q=\nGET"] --> A["Search employees by name or email"]
-    CG["/groups\nPOST"] --> B["Create a group"]
-    LG["/groups\nGET"] --> C["List your groups"]
-    GG["/groups/:id\nGET"] --> D["Get one group with members"]
-    UG["/groups/:id\nPATCH"] --> E["Rename or update members"]
-    DG["/groups/:id\nDELETE"] --> F["Delete group + revoke its access"]
-```
+| Method | Path | Description |
+|---|---|---|
+| GET | `/directory/search?q=` | Search employees by name or email |
+| POST | `/groups` | Create a group |
+| GET | `/groups` | List your groups |
+| GET | `/groups/:id` | Get one group with members |
+| PATCH | `/groups/:id` | Rename or update members |
+| DELETE | `/groups/:id` | Delete group and revoke its access |
 
 ---
 
-## AWS Infrastructure (Terraform)
+## AWS Infrastructure
 
 ```mermaid
 graph TB
     subgraph AWS["☁️ AWS (ap-south-1)"]
-        subgraph VPC["Default VPC"]
-            subgraph EC2_BOX["EC2 t3.medium (Amazon Linux 2023)"]
-                NG["nginx :80\n(reverse proxy)"]
-                FE["frontend container\nReact static files"]
-                BE["backend container\nNode.js :5000"]
-                MG["mongo container\n(Atlas Local + Vector Search)"]
-                RD["redis container"]
-            end
-            EIP["Elastic IP\n(fixed public IP)"]
-            SG["Security Group\nPort 80: open\nPort 22: your IP only"]
+        subgraph EC2["EC2 t3.medium — Amazon Linux 2023"]
+            NG["nginx :80"]
+            FE["frontend\nReact static"]
+            BE["backend\nNode :5000"]
+            MG["mongo\nAtlas Local + Vector Search"]
+            RD["redis"]
         end
-        S3B["S3 Bucket\n(private, AES-256 encrypted)\ndocument file storage"]
-        IAM["IAM Role + Instance Profile\nEC2 → S3 access\n(no credentials in code)"]
+        EIP["Elastic IP"]
+        SG["Security Group\n80 open · 22 your IP only"]
+        S3B["S3 Bucket\nprivate · AES-256"]
+        IAM["IAM Role\nEC2 → S3, no stored keys"]
     end
 
-    USER["👤 User Browser"] -->|"HTTP :80"| EIP
-    EIP --> SG --> NG
+    USER["👤 Browser"] -->|HTTP| EIP --> SG --> NG
     NG -->|"/* static"| FE
     NG -->|"/api/* proxy"| BE
-    BE --> MG
-    BE --> RD
-    BE -->|"IAM role"| S3B
-    IAM -.->|"attached to"| EC2_BOX
+    BE --> MG & RD
+    BE -->|IAM role| S3B
+    IAM -.-> EC2
 ```
-
-### What Terraform Creates
 
 | Resource | Purpose |
 |---|---|
 | EC2 t3.medium | Runs all 4 Docker containers |
 | Elastic IP | Fixed public IP that survives restarts |
-| S3 bucket (private) | Document file storage, AES-256 encrypted |
-| IAM role + instance profile | Lets EC2 access S3 — no credentials in code |
+| S3 bucket | Document file storage, private + encrypted |
+| IAM role | EC2 → S3 access with no credentials in code |
 | Security group | Port 80 open, SSH locked to your IP only |
-
----
-
-## Deployment Flow
-
-```mermaid
-flowchart TD
-    A["Developer: terraform apply"] --> B["AWS creates EC2 + S3 + IAM + EIP"]
-    B --> C["EC2 boots → user_data.sh runs"]
-    C --> D["Install Docker + Docker Compose"]
-    D --> E["git clone repo from GitHub"]
-    E --> F["Write /opt/docusense/infra/.env\nwith all secrets from Terraform vars"]
-    F --> G["docker compose -f docker-compose.prod.yml up --build"]
-    G --> H{"All 4 containers up?"}
-    H -->|"No"| I["Check: docker compose logs"]
-    H -->|"Yes"| J["App live at http://ELASTIC_IP"]
-
-    subgraph Update["♻️ Updating After Code Push"]
-        U1["ssh into EC2"]
-        U2["git pull"]
-        U3["docker compose up -d --build"]
-        U1 --> U2 --> U3
-    end
-```
 
 ---
 
 ## Running Locally
 
-```mermaid
-flowchart LR
-    A["docker compose -f infra/docker-compose.dev.yml up -d"]
-    A --> MG2["MongoDB :27017\n+ Vector Search"]
-    A --> MINIO["MinIO :9000\n(S3-compatible)"]
-    A --> RD2["Redis :6379"]
+```bash
+# 1. Start dependencies (MongoDB + MinIO + Redis)
+docker compose -f infra/docker-compose.dev.yml up -d
 
-    B["cd server && npm run dev"] --> SRV["Express :5000"]
-    C["cd client && npm run dev"] --> CLT["React :5173"]
+# 2. Start backend
+cd server && npm install && npm run dev    # → http://localhost:5000
 
-    SRV --> MG2 & MINIO & RD2
-    CLT -->|"API calls"| SRV
+# 3. Start frontend
+cd client && npm install && npm run dev    # → http://localhost:5173
 ```
 
-**Required `server/.env` variables:**
+**Required `server/.env`:**
 
 | Variable | Description |
 |---|---|
 | `MONGO_URI` | MongoDB connection string |
-| `JWT_ACCESS_SECRET` | Secret for access tokens (min 32 chars) |
-| `JWT_REFRESH_SECRET` | Secret for refresh tokens (different from above) |
+| `JWT_ACCESS_SECRET` | Secret for access tokens |
+| `JWT_REFRESH_SECRET` | Secret for refresh tokens |
 | `PENDING_ROLE_TOKEN_SECRET` | Secret for Google OAuth pending-role tokens |
 | `CLIENT_ORIGIN` | Frontend URL for CORS (`http://localhost:5173`) |
 | `S3_ENDPOINT` | MinIO URL locally (`http://localhost:9000`) |
@@ -412,63 +264,89 @@ flowchart LR
 
 ---
 
-## Security Model
+## Deploying to AWS
 
-```mermaid
-flowchart TD
-    subgraph Every_Request["Every API Request"]
-        R["Incoming request"] --> AT{"Valid\naccessToken?"}
-        AT -->|"No / Expired"| U1["401 — client auto-refreshes via cookie"]
-        AT -->|"Yes"| RL{"Correct\nrole?"}
-        RL -->|"No"| U2["403 Forbidden"]
-        RL -->|"Yes"| OWN{"Owns resource\nor has grant?"}
-        OWN -->|"No"| U3["404 Not Found\n(no 403 — existence hidden)"]
-        OWN -->|"Yes"| OK["Process request ✅"]
-    end
+```bash
+# One-time setup
+aws configure                                   # paste IAM access key + secret
+ssh-keygen -t ed25519 -f ~/.ssh/docusense_key  # keypair for SSH access
+```
 
-    subgraph Protections["Additional Protections"]
-        P1["Passwords: bcrypt cost 12"]
-        P2["Access token TTL: 15 minutes"]
-        P3["Refresh token: httpOnly cookie\n(JS cannot read it)"]
-        P4["File type: checked by MIME, not extension"]
-        P5["Download URLs: presigned S3, expire in 5 min"]
-        P6["S3 credentials: EC2 IAM role (zero stored keys)"]
-        P7["Zod validation on all inputs"]
-        P8["Errors: full detail logged server-side only\nnever exposed to client"]
-    end
+Create `infra/terraform/terraform.tfvars` (gitignored):
+```hcl
+aws_region                = "ap-south-1"
+my_ip_cidr                = "YOUR_IP/32"
+ssh_public_key            = "ssh-ed25519 AAAA..."   # cat ~/.ssh/docusense_key.pub
+repo_url                  = "https://github.com/venunisandhan/DocuSense.git"
+s3_bucket_name            = "docusense-documents-yourname-2024"
+mongo_password            = "StrongPassword123!"
+jwt_access_secret         = "..."                    # openssl rand -hex 32
+jwt_refresh_secret        = "..."
+pending_role_token_secret = "..."
+gemini_api_key            = "YOUR_GEMINI_KEY"
+google_client_id          = "....apps.googleusercontent.com"
+google_client_secret      = "GOCSPX-..."
+```
+
+```bash
+cd infra/terraform
+terraform init && terraform plan && terraform apply
+# Outputs the Elastic IP — add it to Google OAuth Authorized redirect URIs
+# Wait ~10 min for EC2 to boot and start containers
+# App live at http://<ELASTIC_IP>
+```
+
+**Managing the server:**
+```bash
+ssh -i ~/.ssh/docusense_key ec2-user@<EC2_IP>
+cd /opt/docusense/infra
+
+# View logs
+docker compose -f docker-compose.prod.yml logs -f
+
+# Redeploy after a code push
+cd /opt/docusense && git pull
+cd infra && docker compose -f docker-compose.prod.yml up -d --build
+
+# Tear down
+cd ~/Documents/DocuSense/infra/terraform && terraform destroy
 ```
 
 ---
 
-## Server Folder Structure
+## Security
+
+- Passwords hashed with bcrypt (cost 12)
+- Access tokens expire in 15 min; silent refresh via httpOnly cookie (JS cannot read it)
+- Every request: authenticated → correct role → owns or has been granted access
+- Unauthorized requests get 404, not 403 — resource existence is never revealed
+- File type validated by MIME type, not extension
+- Download URLs are presigned S3 links that expire in 5 minutes
+- No AWS credentials in code — EC2 IAM role provides them
+- Zod validation on all inputs; full errors logged server-side only
+
+---
+
+## Project Structure
 
 ```
 server/src/
-├── app.js               # Express app setup, middleware, routes
-├── server.js            # HTTP server + graceful shutdown
-├── config/              # env validation (Zod), DB connect, S3 client
-├── controllers/         # auth, documents, hr
-├── middlewares/         # authenticate, requireRole, requireOwnership
-├── models/              # User, Document, DocumentChunk, AccessGrant,
-│                        # Group, ChatHistory
-├── queues/              # BullMQ queue definition
-├── routes/              # /auth, /documents, /hr
-├── services/            # auth, document, hr, rag (embed + search + generate)
-├── utils/               # logger (Winston), errors, asyncHandler
-├── validators/          # Zod schemas for request bodies
-└── workers/             # rag.worker.js — background embedding job
-```
+├── config/        # env validation (Zod), DB, S3 client
+├── controllers/   # auth, documents, hr
+├── middlewares/   # authenticate, requireRole, requireOwnership
+├── models/        # User, Document, DocumentChunk, AccessGrant, Group, ChatHistory
+├── queues/        # BullMQ queue definition
+├── routes/        # /auth, /documents, /hr
+├── services/      # auth, document, hr, rag (embed + search + generate)
+├── utils/         # logger (Winston), errors, asyncHandler
+├── validators/    # Zod schemas
+└── workers/       # rag.worker.js — background embedding job
 
-## Client Folder Structure
-
-```
 client/src/
-├── App.jsx              # Router + protected route wrappers
-├── context/             # AuthContext (token storage + refresh)
-├── hooks/               # useAuth, useDocuments, usePolling
-├── layouts/             # AppLayout (sidebar + header)
-├── pages/               # Login, Dashboard, DocumentView, Admin
-├── components/          # ChatBot, DocumentViewer, GroupManager, …
-├── services/            # Axios instance + API call functions
-└── utils/               # token helpers, date formatting
+├── context/       # AuthContext (token + refresh)
+├── hooks/         # useAuth, useDocuments, usePolling
+├── layouts/       # AppLayout (sidebar + header)
+├── pages/         # Login, Dashboard, DocumentView, Admin
+├── components/    # ChatBot, DocumentViewer, GroupManager, …
+└── services/      # Axios instance + API call functions
 ```
