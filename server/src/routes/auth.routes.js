@@ -12,19 +12,27 @@ const asyncHandler = require('../utils/asyncHandler');
 const {
   registerSchema,
   loginSchema,
-  forgotPasswordSchema,
-  resetPasswordSchema,
   completeGoogleSchema,
 } = require('../validators/auth.schema');
 
 const router = express.Router();
 
+const rateLimit = require('express-rate-limit');
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { success: false, error: { code: 'TOO_MANY_REQUESTS', message: 'Too many authentication attempts, please try again later.' } },
+});
+
 
 router.post('/register',
+           authLimiter,
            validate(registerSchema),
            asyncHandler(authController.register));
 
 router.post('/login',
+           authLimiter,
            validate(loginSchema),
            asyncHandler(authController.login));
 
@@ -49,14 +57,6 @@ router.post('/google/complete',
         validate(completeGoogleSchema),
         asyncHandler(authController.googleComplete));
 
-router.post(
-        '/forgot-password',
-        validate(forgotPasswordSchema),
-        asyncHandler(authController.forgotPassword));
 
-router.post(
-        '/reset-password',
-        validate(resetPasswordSchema),
-        asyncHandler(authController.resetPassword));
 
 module.exports = router;

@@ -101,18 +101,6 @@ async function me(req, res) {
   });
 }
 
-async function forgotPassword(req, res) {
-  await authService.forgotPassword(req.body.email);
-  res.status(200).json({
-    success: true,
-    data: { message: 'If an account with that email exists, a reset link has been sent.' },
-  });
-}
-
-async function resetPassword(req, res) {
-  await authService.resetPassword(req.body.token, req.body.newPassword);
-  res.status(200).json({ success: true, data: { message: 'Password has been reset. You can now log in.' } });
-}
 
 module.exports = {
   register,
@@ -123,6 +111,4 @@ module.exports = {
   googleRedirect,
   googleCallback,
   googleComplete,
-  forgotPassword,
-  resetPassword,
 };

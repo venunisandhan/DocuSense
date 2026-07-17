@@ -17,19 +17,6 @@ const loginSchema = z.object({
   }),
 });
 
-const forgotPasswordSchema = z.object({
-  body: z.object({
-    email: z.string().trim().toLowerCase().email('Invalid email address'),
-  }),
-});
- 
-const resetPasswordSchema = z.object({
-  body: z.object({
-    token: z.string().min(1, 'Reset token is required'),
-    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-  }),
-});
- 
 const completeGoogleSchema = z.object({
   body: z.object({
     token: z.string().min(1, 'Token is required'),
@@ -40,4 +27,4 @@ const completeGoogleSchema = z.object({
 });
 
 
-module.exports = { registerSchema, loginSchema,forgotPasswordSchema,resetPasswordSchema,completeGoogleSchema };
+module.exports = { registerSchema, loginSchema, completeGoogleSchema };
