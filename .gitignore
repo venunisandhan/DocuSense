@@ -4,7 +4,13 @@ node_modules/
 dist/
 build/
 *.log
+
+# Terraform
 .terraform/
 .terraform.lock.hcl
 *.tfstate
 *.tfstate.backup
+infra/terraform/terraform.tfvars
+
+# Prod env file (has secrets)
+infra/.env

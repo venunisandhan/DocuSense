@@ -5,7 +5,6 @@ import { Home, AlertCircle, ArrowLeft } from 'lucide-react';
 const NotFound = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-alice-blue text-center overflow-hidden">
-      {/* Background blobs */}
       <div className="fixed -top-24 -left-24 w-96 h-96 bg-sky-blue/10 blob blur-3xl -z-10 animate-pulse"></div>
       <div className="fixed -bottom-24 -right-24 w-96 h-96 bg-tangerine/5 blob blur-3xl -z-10 animate-pulse delay-700"></div>
 
