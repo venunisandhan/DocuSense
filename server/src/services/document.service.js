@@ -149,6 +149,19 @@ async function getDocumentForUser(documentId, user) {
   };
 }
 
+async function getViewUrlForUser(documentId, user) {
+  if (user.role === 'HR') {
+    const document = await Document.findOne({ _id: documentId, uploadedBy: user.id, isDeleted: false }).select('+s3Key');
+    if (!document) throw new ApiError(404, 'Document not found', 'DOCUMENT_NOT_FOUND');
+    return s3Service.getPresignedViewUrl(document.s3Key);
+  }
+  const allowed = await accessService.hasAccess(user.id, documentId);
+  if (!allowed) throw new ApiError(404, 'Document not found', 'DOCUMENT_NOT_FOUND');
+  const document = await Document.findOne({ _id: documentId, isDeleted: false }).select('+s3Key');
+  if (!document) throw new ApiError(404, 'Document not found', 'DOCUMENT_NOT_FOUND');
+  return s3Service.getPresignedViewUrl(document.s3Key);
+}
+
 async function getDownloadUrlForUser(documentId, user) {
   if (user.role === 'HR') {
     return getDownloadUrlForOwner(documentId, user.id);
@@ -181,6 +194,7 @@ module.exports = {
   listMyUploads,
   getDocumentForOwner,
   getDownloadUrlForOwner,
+  getViewUrlForUser,
   updateGuidelines,
   getDocumentForUser,
   getDownloadUrlForUser,

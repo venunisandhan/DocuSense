@@ -31,7 +31,16 @@ async function getPresignedDownloadUrl(s3Key, downloadFilename) {
     ResponseContentDisposition: `attachment; filename="${downloadFilename}"`,
   });
 
-  return getSignedUrl(s3Client, command, { expiresIn: 300 });
+  return getSignedUrl(s3Client, command, { expiresIn: 3600 });
 }
 
-module.exports = { buildS3Key, uploadBuffer, getPresignedDownloadUrl, generateDocumentId: randomUUID };
+async function getPresignedViewUrl(s3Key) {
+  const command = new GetObjectCommand({
+    Bucket: env.S3_BUCKET,
+    Key: s3Key,
+  });
+
+  return getSignedUrl(s3Client, command, { expiresIn: 3600 });
+}
+
+module.exports = { buildS3Key, uploadBuffer, getPresignedDownloadUrl, getPresignedViewUrl, generateDocumentId: randomUUID };

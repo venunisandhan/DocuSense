@@ -55,7 +55,12 @@ async function getDocument(req, res) {
 
 async function getDownloadUrl(req, res) {
   const url = await documentService.getDownloadUrlForUser(req.params.id, req.user);
-  res.status(200).json({ success: true, data: { url, expiresInSeconds: 300 } });
+  res.status(200).json({ success: true, data: { url, expiresInSeconds: 3600 } });
+}
+
+async function getViewUrl(req, res) {
+  const url = await documentService.getViewUrlForUser(req.params.id, req.user);
+  res.status(200).json({ success: true, data: { url, expiresInSeconds: 3600 } });
 }
 
 async function updateGuidelines(req, res) {
@@ -74,6 +79,7 @@ module.exports = {
   listMyShared,
   getDocument,
   getDownloadUrl,
+  getViewUrl,
   updateGuidelines,
   deleteDocument
 };

@@ -68,9 +68,9 @@ const DocumentViewer = () => {
       }
     };
 
-    const fetchDownloadUrl = async () => {
+    const fetchViewUrl = async () => {
       try {
-        const { data } = await api.get(`/documents/${id}/download`);
+        const { data } = await api.get(`/documents/${id}/view`);
         setPdfUrl(data.data.url);
       } catch (err) {
       }
@@ -89,7 +89,7 @@ const DocumentViewer = () => {
     };
 
     fetchDocument();
-    fetchDownloadUrl();
+    fetchViewUrl();
     fetchRagStatus();
 
     intervalId = setInterval(fetchRagStatus, 3000);
@@ -265,9 +265,16 @@ const DocumentViewer = () => {
                   setNumPages(numPages);
                   setPdfLoading(false);
                 }}
-                onLoadError={() => {
+                onLoadError={async () => {
                   setPdfLoading(false);
-                  setError('Failed to load PDF. The link may have expired — try refreshing.');
+                  // Refresh the signed URL and retry once before showing error
+                  try {
+                    const { data } = await api.get(`/documents/${id}/view`);
+                    setPdfUrl(data.data.url);
+                    setPdfLoading(true);
+                  } catch {
+                    setError('Failed to load PDF. The link may have expired — try refreshing.');
+                  }
                 }}
                 className="py-6"
               >

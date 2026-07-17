@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AppLayout from '../layouts/AppLayout';
 import { 
   FileText,
@@ -248,6 +248,18 @@ const Documents = () => {
   const [uploadError, setUploadError] = useState('');
   const [accessFilter, setAccessFilter] = useState('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchDocs = async () => {
     setLoading(true);
@@ -419,37 +431,42 @@ const Documents = () => {
                 <div className="w-12 h-12 rounded-xl bg-sky-blue/10 flex items-center justify-center text-sky-blue">
                   <FileText className="w-6 h-6" />
                 </div>
-                <div className="relative group" onClick={e => e.stopPropagation()}>
-                  <button className="p-1 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
+                <div className="relative" onClick={e => e.stopPropagation()} ref={openMenuId === doc._id ? menuRef : null}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === doc._id ? null : doc._id); }}
+                    className="p-1 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                  >
                     <MoreVertical className="w-5 h-5 text-slate-400" />
                   </button>
-                  <div className="absolute right-0 top-full mt-2 w-48 glass rounded-xl shadow-xl border border-white/40 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all z-20 overflow-hidden">
-                    <button onClick={() => navigate(`/documents/${doc._id}`)} className="w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-white/60 flex items-center gap-2 cursor-pointer">
-                      <Eye className="w-4 h-4" /> View Details
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleDownload(doc._id); }}
-                      className="w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-white/60 flex items-center gap-2 cursor-pointer"
-                    >
-                      <Download className="w-4 h-4" /> Download
-                    </button>
-                    {user?.role === 'HR' && (
+                  {openMenuId === doc._id && (
+                    <div className="absolute right-0 top-full mt-1 w-48 glass rounded-xl shadow-xl border border-white/40 z-20 overflow-hidden">
+                      <button onClick={() => { setOpenMenuId(null); navigate(`/documents/${doc._id}`); }} className="w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-white/60 flex items-center gap-2 cursor-pointer">
+                        <Eye className="w-4 h-4" /> View Details
+                      </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); setShareDoc(doc); }}
-                        className="w-full px-4 py-2.5 text-left text-sm text-sky-blue hover:bg-sky-blue/10 flex items-center gap-2 cursor-pointer"
+                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); handleDownload(doc._id); }}
+                        className="w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-white/60 flex items-center gap-2 cursor-pointer"
                       >
-                        <Share2 className="w-4 h-4" /> Share Access
+                        <Download className="w-4 h-4" /> Download
                       </button>
-                    )}  
-                    {user?.role === 'HR' && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDelete(doc._id); }}
-                        className="w-full px-4 py-2.5 text-left text-sm text-rose-500 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" /> Delete
-                      </button>
-                    )}
-                  </div>
+                      {user?.role === 'HR' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); setShareDoc(doc); }}
+                          className="w-full px-4 py-2.5 text-left text-sm text-sky-blue hover:bg-sky-blue/10 flex items-center gap-2 cursor-pointer"
+                        >
+                          <Share2 className="w-4 h-4" /> Share Access
+                        </button>
+                      )}
+                      {user?.role === 'HR' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); handleDelete(doc._id); }}
+                          className="w-full px-4 py-2.5 text-left text-sm text-rose-500 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" /> Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

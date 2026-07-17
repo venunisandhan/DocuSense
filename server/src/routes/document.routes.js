@@ -87,6 +87,11 @@ router.get(
   validate(documentIdParamSchema),
   asyncHandler(documentController.getDownloadUrl)
 );
+router.get(
+  '/:id/view',
+  validate(documentIdParamSchema),
+  asyncHandler(documentController.getViewUrl)
+);
 
 router.get('/:id/rag-status', validate(ragParamSchema), asyncHandler(ragController.getRagStatus));
 router.post('/:id/chat', validate(chatSchema), asyncHandler(ragController.chat));
