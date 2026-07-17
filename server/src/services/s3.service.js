@@ -38,6 +38,7 @@ async function getPresignedViewUrl(s3Key) {
   const command = new GetObjectCommand({
     Bucket: env.S3_BUCKET,
     Key: s3Key,
+    ResponseContentType: 'application/pdf',
   });
 
   return getSignedUrl(s3Client, command, { expiresIn: 3600 });
