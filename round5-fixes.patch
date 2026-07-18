@@ -16,7 +16,7 @@ similarity index 100%
 rename from client/public/favicon.svg
 rename to client/public/icon-docusense.svg
 diff --git a/client/src/layouts/AppLayout.jsx b/client/src/layouts/AppLayout.jsx
-index 508aaa0..d58cb6a 100644
+index 508aaa0..7be73f3 100644
 --- a/client/src/layouts/AppLayout.jsx
 +++ b/client/src/layouts/AppLayout.jsx
 @@ -82,7 +82,7 @@ const AppLayout = ({ children, title, hideWelcome = false }) => {
@@ -28,6 +28,59 @@ index 508aaa0..d58cb6a 100644
      { icon: FileText, label: 'Documents', path: '/documents' },
      ...(user?.role === 'HR' ? [{ icon: Users, label: 'HR Management', path: '/hr' }] : []),
    ];
+@@ -224,8 +224,8 @@ const AppLayout = ({ children, title, hideWelcome = false }) => {
+                 <p className="text-sm font-bold text-slate-800">{user?.name}</p>
+                 <p className="text-xs text-slate-500 uppercase tracking-wider">{user?.role}</p>
+               </div>
+-              <div className="w-10 h-10 bg-gradient-to-br from-sky-blue to-indigo-400 rounded-xl flex items-center justify-center text-white font-bold shadow-md shrink-0">
+-                {user?.name?.charAt(0)}
++              <div className="w-10 h-10 bg-gradient-to-br from-sky-blue to-indigo-400 rounded-xl flex items-center justify-center text-white shadow-md shrink-0">
++                <User className="w-5 h-5" />
+               </div>
+             </div>
+           </div>
+diff --git a/client/src/pages/Login.jsx b/client/src/pages/Login.jsx
+index 0a4b824..1d38f77 100644
+--- a/client/src/pages/Login.jsx
++++ b/client/src/pages/Login.jsx
+@@ -1,6 +1,6 @@
+ import React, { useState } from 'react';
+ import { useNavigate, Link } from 'react-router-dom';
+-import { Mail, Lock, Loader2, Cpu, AlertCircle, ArrowRight } from 'lucide-react';
++import { Mail, Lock, Loader2, FileText, AlertCircle, ArrowRight } from 'lucide-react';
+ import { login } from '../services/auth.service';
+ import api from '../services/api';
+ import { useAuth } from '../context/AuthContext';
+@@ -44,7 +44,7 @@ const Login = () => {
+ 
+       <div className="glass-card w-full max-w-md p-10 flex flex-col items-center">
+         <div className="w-16 h-16 bg-sky-blue rounded-2xl flex items-center justify-center text-white shadow-xl shadow-sky-blue/20 mb-8 animate-bounce">
+-          <Cpu className="w-10 h-10" />
++          <FileText className="w-10 h-10" />
+         </div>
+ 
+         <div className="text-center mb-10">
+diff --git a/client/src/pages/Register.jsx b/client/src/pages/Register.jsx
+index 24e0428..83dab62 100644
+--- a/client/src/pages/Register.jsx
++++ b/client/src/pages/Register.jsx
+@@ -1,6 +1,6 @@
+ import React, { useState } from 'react';
+ import { useNavigate, Link } from 'react-router-dom';
+-import { Mail, Lock, User, Loader2, Cpu, AlertCircle, ArrowRight, ShieldCheck, Briefcase } from 'lucide-react';
++import { Mail, Lock, User, Loader2, FileText, AlertCircle, ArrowRight, ShieldCheck, Briefcase } from 'lucide-react';
+ import { register } from '../services/auth.service';
+ import { useAuth } from '../context/AuthContext';
+ 
+@@ -39,7 +39,7 @@ const Register = () => {
+ 
+       <div className="glass-card w-full max-w-md p-10 flex flex-col items-center">
+         <div className="w-16 h-16 bg-sky-blue rounded-2xl flex items-center justify-center text-white shadow-xl shadow-sky-blue/20 mb-8">
+-          <Cpu className="w-10 h-10" />
++          <FileText className="w-10 h-10" />
+         </div>
+ 
+         <div className="text-center mb-10">
 --- a/client/src/pages/Documents.jsx
 +++ b/client/src/pages/Documents.jsx
 @@ -19,6 +19,7 @@
