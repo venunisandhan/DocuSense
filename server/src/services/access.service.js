@@ -16,6 +16,10 @@ function isGrantActive(access) {
 }
 
 async function hasAccess(userId, documentId) {
+  const document = await Document.findOne({ _id: documentId, isDeleted: false }).select('accessLevel');
+  if (!document) return false;
+  if (document.accessLevel === 'Public') return true;
+
   const directGrant = await DocumentAccess.findOne({ document: documentId, grantedTo: userId, isRevoked: false });
   if (directGrant && isGrantActive(directGrant)) return true;
 

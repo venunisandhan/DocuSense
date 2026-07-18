@@ -19,6 +19,7 @@ import {
   Users,
   User,
   Infinity as InfinityIcon,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getDocuments, uploadDocument, deleteDocument } from '../services/document.service';
@@ -86,14 +87,14 @@ const ShareModal = ({ doc, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="glass w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
-        <div className="p-6 border-b border-white/20 flex items-center justify-between shrink-0">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between shrink-0">
           <div>
             <h3 className="text-xl font-heading font-bold text-slate-800">Share Document</h3>
             <p className="text-xs text-slate-500 mt-0.5 truncate max-w-xs">{doc.title || doc.originalFilename}</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/40 rounded-full cursor-pointer">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full cursor-pointer">
             <X className="w-5 h-5 text-slate-500" />
           </button>
         </div>
@@ -105,15 +106,15 @@ const ShareModal = ({ doc, onClose }) => {
             </div>
             <h4 className="text-xl font-bold text-slate-800 mb-2">Access Granted!</h4>
             <p className="text-slate-500 text-sm mb-6">The selected recipient can now access this document.</p>
-            <button onClick={onClose} className="glass-button bg-sky-blue text-white font-bold px-8">Done</button>
+            <button onClick={onClose} className="rounded-xl bg-sky-blue text-white font-bold px-8 py-2.5 shadow-lg shadow-sky-blue/40 hover:brightness-105 transition-all cursor-pointer">Done</button>
           </div>
         ) : (
           <div className="p-6 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
-            <div className="flex items-center gap-1 glass p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
               <button
                 onClick={() => { setTab('user'); setSelectedId(null); setSearchQ(''); }}
                 className={cn('flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer',
-                  tab === 'user' ? 'bg-white text-sky-blue shadow-sm' : 'text-slate-500'
+                  tab === 'user' ? 'bg-white text-sky-blue shadow-sm' : 'text-slate-600 hover:text-slate-800'
                 )}
               >
                 <User className="w-4 h-4" /> Person
@@ -121,20 +122,20 @@ const ShareModal = ({ doc, onClose }) => {
               <button
                 onClick={() => { setTab('group'); setSelectedId(null); setSearchQ(''); }}
                 className={cn('flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer',
-                  tab === 'group' ? 'bg-white text-sky-blue shadow-sm' : 'text-slate-500'
+                  tab === 'group' ? 'bg-white text-sky-blue shadow-sm' : 'text-slate-600 hover:text-slate-800'
                 )}
               >
                 <Users className="w-4 h-4" /> Group
               </button>
             </div>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
               <input
                 type="text"
                 value={searchQ}
                 onChange={e => setSearchQ(e.target.value)}
                 placeholder={tab === 'user' ? 'Search employees…' : 'Search groups…'}
-                className="w-full glass-input pl-10 text-sm"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 pl-10 text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-sky-blue/50 focus:border-sky-blue outline-hidden transition-all"
               />
             </div>
             <div className="max-h-52 overflow-y-auto custom-scrollbar space-y-1 pr-1">
@@ -155,12 +156,12 @@ const ShareModal = ({ doc, onClose }) => {
                     onClick={() => setSelectedId(item._id)}
                     className={cn(
                       'w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left border',
-                      isSelected ? 'bg-sky-blue/10 border-sky-blue/30' : 'hover:bg-white/50 border-transparent'
+                      isSelected ? 'bg-sky-blue/10 border-sky-blue/40' : 'bg-white hover:bg-slate-50 border-slate-200'
                     )}
                   >
                     <div className={cn(
                       'w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0',
-                      isSelected ? 'bg-sky-blue text-white' : 'bg-slate-100 text-slate-500'
+                      isSelected ? 'bg-sky-blue text-white' : 'bg-slate-100 text-slate-600'
                     )}>
                       {isSelected
                         ? <Check className="w-4 h-4" />
@@ -207,19 +208,19 @@ const ShareModal = ({ doc, onClose }) => {
                   value={expiresAt}
                   min={new Date().toISOString().slice(0, 16)}
                   onChange={e => setExpiresAt(e.target.value)}
-                  className="w-full glass-input mt-2 text-sm"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-800 mt-2 focus:ring-2 focus:ring-sky-blue/50 focus:border-sky-blue outline-hidden transition-all"
                 />
               )}
             </div>
 
             {error && (
-              <p className="text-sm text-rose-500 bg-rose-50 border border-rose-100 rounded-xl px-4 py-2">{error}</p>
+              <p className="text-sm text-rose-600 font-medium bg-rose-50 border border-rose-200 rounded-xl px-4 py-2">{error}</p>
             )}
           </div>
         )}
 
         {!done && (
-          <div className="p-6 border-t border-white/20 flex gap-3 shrink-0">
+          <div className="p-6 border-t border-slate-200 flex gap-3 shrink-0">
             <button onClick={onClose} className="flex-1 rounded-xl border border-slate-200 bg-white font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer py-2.5">Cancel</button>
             <button
               onClick={handleShare}
@@ -251,6 +252,8 @@ const Documents = () => {
   const [accessFilter, setAccessFilter] = useState('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -318,12 +321,15 @@ const Documents = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this document?')) return;
+    setDeleting(true);
     try {
       await deleteDocument(id);
+      setDeleteTarget(null);
       fetchDocs();
     } catch (err) {
       alert('Delete failed');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -471,7 +477,7 @@ const Documents = () => {
                         <>
                           <div className="my-1.5 border-t border-slate-100" />
                           <button
-                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); handleDelete(doc._id); }}
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); setDeleteTarget(doc); }}
                             className="w-full px-3.5 py-2.5 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" /> Delete
@@ -615,6 +621,40 @@ const Documents = () => {
       )}
       {shareDoc && (
         <ShareModal doc={shareDoc} onClose={() => setShareDoc(null)} />
+      )}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center mb-4">
+                <AlertTriangle className="w-7 h-7 text-rose-600" />
+              </div>
+              <h3 className="text-lg font-heading font-bold text-slate-800">Delete document?</h3>
+              <p className="text-sm text-slate-500 mt-2">
+                This will permanently delete{' '}
+                <span className="font-bold text-slate-700">{deleteTarget.title || deleteTarget.originalFilename}</span>{' '}
+                and revoke access for anyone it was shared with. This can't be undone.
+              </p>
+            </div>
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="flex-1 rounded-xl border border-slate-200 bg-white font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer py-2.5 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteTarget._id)}
+                disabled={deleting}
+                className="flex-1 rounded-xl bg-rose-600 text-white font-bold flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-lg shadow-rose-600/30 hover:brightness-105 active:scale-[0.98] transition-all py-2.5"
+              >
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </AppLayout>
   );

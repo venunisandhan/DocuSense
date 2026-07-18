@@ -62,15 +62,27 @@ async function listMyShared(employeeId) {
   }
 
   const docIds = Array.from(docAccessMap.keys());
-  const docs = await Document.find({ _id: { $in: docIds }, isDeleted: false }).sort({ createdAt: -1 }).lean();
+  const grantedDocs = await Document.find({ _id: { $in: docIds }, isDeleted: false }).sort({ createdAt: -1 }).lean();
 
-  return docs.map(doc => {
+  const publicDocs = await Document.find({
+    accessLevel: 'Public',
+    isDeleted: false,
+    _id: { $nin: docIds },
+  }).sort({ createdAt: -1 }).lean();
+
+  const grantedResults = grantedDocs.map(doc => {
     const access = docAccessMap.get(doc._id.toString());
     return {
       ...doc,
       expiresAt: access && access.accessType === 'EXPIRING' ? access.expiresAt : null
     };
   });
+
+  const publicResults = publicDocs.map(doc => ({ ...doc, expiresAt: null }));
+
+  return [...grantedResults, ...publicResults].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
 }
 
 async function listMyUploads(uploadedBy) {
