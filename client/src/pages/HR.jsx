@@ -68,8 +68,10 @@ const GroupModal = ({ onClose, onSaved, allEmployees, editGroup }) => {
   const [error, setError] = useState('');
 
   const filtered = allEmployees.filter(e =>
-    e.name.toLowerCase().includes(searchQ.toLowerCase()) ||
-    e.email.toLowerCase().includes(searchQ.toLowerCase())
+    e.role !== 'HR' && (
+      e.name.toLowerCase().includes(searchQ.toLowerCase()) ||
+      e.email.toLowerCase().includes(searchQ.toLowerCase())
+    )
   );
 
   const toggle = id => setSelected(prev => {
