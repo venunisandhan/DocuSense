@@ -8,12 +8,12 @@
 
 ```mermaid
 graph TB
-    subgraph Client["🖥️ Client (React + Vite)"]
+    subgraph Client["Client (React + Vite)"]
         UI["Pages & Components"]
         AXIOS["Axios (interceptors)"]
     end
 
-    subgraph Server["⚙️ Server (Node.js / Express)"]
+    subgraph Server["Server (Node.js / Express)"]
         ROUTES["Routes /api/v1"]
         MW["Middlewares\n(auth · role · ownership)"]
         CTRL["Controllers"]
@@ -22,13 +22,13 @@ graph TB
         WORKER["RAG Worker"]
     end
 
-    subgraph Storage["💾 Storage"]
+    subgraph Storage["Storage"]
         MONGO[("MongoDB\n+ Vector Index")]
         REDIS[("Redis")]
         S3["AWS S3"]
     end
 
-    subgraph AI["🤖 Google Gemini"]
+    subgraph AI["Google Gemini"]
         EMBED["gemini-embedding-2"]
         GEN["gemini-3.1-flash-lite"]
     end
@@ -118,7 +118,7 @@ Local auth (email + bcrypt password) follows the same token pattern without the 
 
 ```mermaid
 flowchart LR
-    subgraph Upload["📤 On Upload (background)"]
+    subgraph Upload["On Upload (background)"]
         direction TB
         A["HR uploads file"] --> B["S3 store + MongoDB record\nstatus: pending"]
         B --> C["Enqueue job → BullMQ"]
@@ -128,7 +128,7 @@ flowchart LR
         F --> G["Store in MongoDB\nstatus: ready"]
     end
 
-    subgraph Chat["💬 On Question"]
+    subgraph Chat["On Question"]
         direction TB
         H["User asks question"] --> I["Embed question → vector"]
         I --> J["MongoDB Vector Search\nagainst document chunks"]
@@ -197,7 +197,7 @@ Base: `/api/v1` — all responses: `{ success, data }` or `{ success: false, err
 
 ```mermaid
 graph TB
-    subgraph AWS["☁️ AWS (ap-south-1)"]
+    subgraph AWS["WS (ap-south-1)"]
         subgraph EC2["EC2 t3.medium — Amazon Linux 2023"]
             NG["nginx :80"]
             FE["frontend\nReact static"]
@@ -211,7 +211,7 @@ graph TB
         IAM["IAM Role\nEC2 → S3, no stored keys"]
     end
 
-    USER["👤 Browser"] -->|HTTP| EIP --> SG --> NG
+    USER["Browser"] -->|HTTP| EIP --> SG --> NG
     NG -->|"/* static"| FE
     NG -->|"/api/* proxy"| BE
     BE --> MG & RD

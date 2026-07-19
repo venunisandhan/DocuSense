@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Loader2, Cpu, AlertCircle, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Loader2, Layers, AlertCircle, ArrowRight } from 'lucide-react';
 import { login } from '../services/auth.service';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -44,7 +44,7 @@ const Login = () => {
 
       <div className="glass-card w-full max-w-md p-10 flex flex-col items-center">
         <div className="w-16 h-16 bg-sky-blue rounded-2xl flex items-center justify-center text-white shadow-xl shadow-sky-blue/20 mb-8 animate-bounce">
-          <Cpu className="w-10 h-10" />
+          <Layers className="w-10 h-10" />
         </div>
 
         <div className="text-center mb-10">

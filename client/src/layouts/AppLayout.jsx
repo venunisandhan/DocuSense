@@ -7,7 +7,7 @@ import {
   LogOut, 
   ChevronLeft, 
   ChevronRight,
-  Cpu,
+  Layers,
   Search,
   User,
   Menu,
@@ -106,7 +106,7 @@ const AppLayout = ({ children, title, hideWelcome = false }) => {
       >
         <div className="flex items-center gap-3 mb-12 px-4">
           <div className="w-10 h-10 bg-sky-blue rounded-xl flex items-center justify-center shadow-lg shadow-sky-blue/20">
-            <Cpu className="text-white w-6 h-6" />
+            <Layers className="text-white w-6 h-6" />
           </div>
           {!isSidebarCollapsed && (
             <span className="font-heading text-xl font-bold tracking-tight text-slate-800">DocuSense</span>

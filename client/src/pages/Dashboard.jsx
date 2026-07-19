@@ -11,13 +11,23 @@ import {
   ShieldCheck,
   Zap,
   Clock,
-  ChevronRight,
-  Bot
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import ChatBot from '../components/ChatBot';
 import { useNavigate } from 'react-router-dom';
+
+// Google Docs-style document icon
+const DocIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="currentColor" opacity="0.9"/>
+    <path d="M14 2V8H20" fill="white" opacity="0.5"/>
+    <rect x="8" y="13" width="8" height="1.5" rx="0.75" fill="white"/>
+    <rect x="8" y="16" width="8" height="1.5" rx="0.75" fill="white"/>
+    <rect x="8" y="10" width="5" height="1.5" rx="0.75" fill="white"/>
+  </svg>
+);
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -137,7 +147,7 @@ const Dashboard = () => {
         onClick={() => setIsChatOpen(true)}
         className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-br from-sky-blue to-indigo-500 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group cursor-pointer"
       >
-        <Bot className="w-8 h-8" />
+        <DocIcon className="w-8 h-8" />
         <span className="absolute -top-12 right-0 bg-slate-800 text-white text-[10px] py-1 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
           Ask DocuSense
         </span>

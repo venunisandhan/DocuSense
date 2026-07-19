@@ -16,7 +16,6 @@ import {
   Loader2,
   FileText,
   MessageSquare,
-  Bot,
   Send,
   X,
   AlertCircle,
@@ -24,6 +23,27 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import * as mammoth from 'mammoth';
+
+// Google Docs-style document icon
+const DocIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="currentColor" opacity="0.9"/>
+    <path d="M14 2V8H20" fill="white" opacity="0.5"/>
+    <rect x="8" y="13" width="8" height="1.5" rx="0.75" fill="white"/>
+    <rect x="8" y="16" width="8" height="1.5" rx="0.75" fill="white"/>
+    <rect x="8" y="10" width="5" height="1.5" rx="0.75" fill="white"/>
+  </svg>
+);
+
+const DocIconSmall = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="currentColor"/>
+    <path d="M14 2V8H20" fill="white" opacity="0.4"/>
+    <rect x="8" y="12.5" width="8" height="1.5" rx="0.75" fill="white"/>
+    <rect x="8" y="15.5" width="6" height="1.5" rx="0.75" fill="white"/>
+    <rect x="8" y="9.5" width="4" height="1.5" rx="0.75" fill="white"/>
+  </svg>
+);
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -242,10 +262,10 @@ const DocumentViewer = () => {
           <button
             onClick={() => setIsChatOpen(o => !o)}
             className="glass-button bg-sky-blue text-white flex items-center gap-2 text-sm px-4 py-2"
-            title="Ask DocuBot"
+            title="Ask DocuSense"
           >
-            <Bot className="w-4 h-4" />
-            Ask DocuBot
+            <DocIcon className="w-4 h-4" />
+            Ask DocuSense
           </button>
 
           <button
@@ -334,14 +354,20 @@ const DocumentViewer = () => {
         </div>
 
         {isChatOpen && (
-          <div className="flex-[2] glass rounded-3xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
+          // On mobile: fixed overlay anchored to viewport. On lg: side panel.
+          <>
+            <div
+              className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-[59] lg:hidden"
+              onClick={() => setIsChatOpen(false)}
+            />
+            <div className="fixed inset-4 lg:static lg:inset-auto lg:flex-[2] glass rounded-3xl flex flex-col overflow-hidden animate-in slide-in-from-bottom lg:slide-in-from-right duration-300 z-[60] lg:z-auto">
             <div className="p-4 border-b border-white/20 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-sky-blue rounded-lg flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-white" />
+                  <DocIcon className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800 text-sm">DocuBot</p>
+                  <p className="font-bold text-slate-800 text-sm">DocuSense</p>
                   <p className="text-[10px] text-slate-400">
                     {ragStatus === 'READY' ? (
                       <span className="text-emerald-500 font-semibold">● Ready</span>
@@ -364,7 +390,7 @@ const DocumentViewer = () => {
               {messages.map((msg, i) => (
                 <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                   <div className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center text-white text-xs font-bold ${msg.role === 'user' ? 'bg-sky-blue' : 'bg-slate-300'}`}>
-                    {msg.role === 'user' ? user?.name?.charAt(0) : <Bot className="w-4 h-4 text-slate-600" />}
+                    {msg.role === 'user' ? user?.name?.charAt(0) : <DocIconSmall className="w-4 h-4 text-white" />}
                   </div>
                   <div className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed ${
                     msg.role === 'user'
@@ -386,7 +412,7 @@ const DocumentViewer = () => {
               {chatLoading && (
                 <div className="flex gap-2">
                   <div className="w-7 h-7 rounded-lg bg-slate-200 flex items-center justify-center animate-pulse">
-                    <Bot className="w-4 h-4 text-slate-400" />
+                    <DocIconSmall className="w-4 h-4 text-white" />
                   </div>
                   <div className="bg-white/70 border border-white/60 rounded-2xl rounded-tl-none p-3 flex items-center gap-2">
                     <Loader2 className="w-3 h-3 animate-spin text-sky-blue" />
@@ -415,7 +441,8 @@ const DocumentViewer = () => {
                 </button>
               </div>
             </form>
-          </div>
+            </div>
+          </>
         )}
       </div>
     </AppLayout>
