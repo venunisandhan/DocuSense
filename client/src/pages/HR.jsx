@@ -25,6 +25,38 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
+/* ────────── Confirm Dialog ────────── */
+const ConfirmDialog = ({ title, message, onConfirm, onCancel, loading }) => (
+  <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="p-6">
+        <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center mb-4">
+          <Trash2 className="w-6 h-6 text-rose-500" />
+        </div>
+        <h3 className="text-lg font-heading font-bold text-slate-800 mb-2">{title}</h3>
+        <p className="text-sm text-slate-500 leading-relaxed">{message}</p>
+      </div>
+      <div className="px-6 pb-6 flex gap-3">
+        <button
+          onClick={onCancel}
+          disabled={loading}
+          className="flex-1 bg-slate-100 hover:bg-slate-200 transition-colors rounded-xl font-bold text-slate-600 py-3 cursor-pointer disabled:opacity-50"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirm}
+          disabled={loading}
+          className="flex-1 bg-rose-500 hover:bg-rose-600 transition-colors rounded-xl text-white font-bold flex items-center justify-center gap-2 py-3 cursor-pointer disabled:opacity-50"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 /* ────────── Create / Edit Group Modal ────────── */
 const GroupModal = ({ onClose, onSaved, allEmployees, editGroup }) => {
   const [groupName, setGroupName] = useState(editGroup?.name || '');
@@ -190,6 +222,8 @@ const HR = () => {
 
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [editGroup, setEditGroup] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { id, name }
+  const [deleting, setDeleting] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -221,13 +255,17 @@ const HR = () => {
     }
   };
 
-  const handleDeleteGroup = async (groupId, groupName) => {
-    if (!window.confirm(`Delete group "${groupName}"? This will revoke all document access granted through it.`)) return;
+  const handleDeleteGroup = async () => {
+    if (!deleteConfirm) return;
+    setDeleting(true);
     try {
-      await deleteGroup(groupId);
-      setGroups(prev => prev.filter(g => g._id !== groupId));
+      await deleteGroup(deleteConfirm.id);
+      setGroups(prev => prev.filter(g => g._id !== deleteConfirm.id));
+      setDeleteConfirm(null);
     } catch (err) {
-      alert('Delete failed: ' + (err.response?.data?.error?.message || err.message));
+      setDeleteConfirm(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -355,7 +393,7 @@ const HR = () => {
                     <Settings className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteGroup(group._id, group.name)}
+                    onClick={() => setDeleteConfirm({ id: group._id, name: group.name })}
                     className="p-2 hover:bg-rose-50 rounded-xl text-slate-400 hover:text-rose-500 cursor-pointer"
                     title="Delete group"
                   >
@@ -405,6 +443,15 @@ const HR = () => {
           editGroup={editGroup}
           onClose={() => setShowGroupModal(false)}
           onSaved={fetchData}
+        />
+      )}
+      {deleteConfirm && (
+        <ConfirmDialog
+          title="Delete Group"
+          message={`Delete "${deleteConfirm.name}"? This will revoke all document access granted through it.`}
+          onConfirm={handleDeleteGroup}
+          onCancel={() => setDeleteConfirm(null)}
+          loading={deleting}
         />
       )}
     </AppLayout>
