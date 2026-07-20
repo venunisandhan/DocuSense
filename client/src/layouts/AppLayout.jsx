@@ -82,7 +82,7 @@ const AppLayout = ({ children, title, hideWelcome = false }) => {
   };
 
   const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+    ...(user?.role !== 'HR' ? [{ icon: LayoutDashboard, label: 'Dashboard', path: '/' }] : []),
     { icon: FileText, label: 'Documents', path: '/documents' },
     ...(user?.role === 'HR' ? [{ icon: Users, label: 'HR Management', path: '/hr' }] : []),
   ];
