@@ -13,9 +13,12 @@ import {
   Menu,
   X,
   Loader2,
-  File
+  File,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -28,6 +31,7 @@ const AppLayout = ({ children, title, hideWelcome = false }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { isDark, toggleTheme } = useTheme();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -218,6 +222,17 @@ const AppLayout = ({ children, title, hideWelcome = false }) => {
                 </div>
               )}
             </div>
+
+            <button
+              id="theme-toggle"
+              onClick={toggleTheme}
+              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              className="p-2 glass-button shrink-0 cursor-pointer hover:scale-110 transition-transform"
+            >
+              {isDark
+                ? <Sun className="w-5 h-5 text-tangerine" />
+                : <Moon className="w-5 h-5 text-sky-blue" />}
+            </button>
 
             <div className="flex items-center gap-3 shrink-0 md:pl-4 md:border-l border-slate-200">
               <div className="text-right hidden md:block">

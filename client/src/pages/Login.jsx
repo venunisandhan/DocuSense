@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Loader2, Layers, AlertCircle, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Loader2, Layers, AlertCircle, ArrowRight, Sun, Moon } from 'lucide-react';
 import { login } from '../services/auth.service';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -11,6 +12,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { setUser } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,6 +39,15 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-alice-blue">
+      {/* Theme toggle – top right */}
+      <button
+        id="theme-toggle-login"
+        onClick={toggleTheme}
+        title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        className="fixed top-5 right-5 p-2 glass-button cursor-pointer hover:scale-110 transition-transform z-50"
+      >
+        {isDark ? <Sun className="w-5 h-5 text-tangerine" /> : <Moon className="w-5 h-5 text-sky-blue" />}
+      </button>
       <div className="absolute top-0 left-0 w-full h-full -z-10">
         <div className="absolute top-1/4 -left-20 w-80 h-80 bg-sky-blue/20 blob blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-tangerine/10 blob blur-3xl animate-pulse delay-700"></div>
